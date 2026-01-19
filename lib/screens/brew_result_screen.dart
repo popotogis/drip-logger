@@ -149,7 +149,7 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
                       labelText: 'Select Bean',
                       border: OutlineInputBorder(),
                     ),
-                    value: _selectedBean,
+                    initialValue: _selectedBean,
                     items: _beans.map((bean) {
                       return DropdownMenuItem(
                         value: bean,
@@ -282,7 +282,7 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
                           .replaceAll(RegExp(r'[<>:"/\\|?*]'), '_') ??
                       'NoBean';
 
-                  final filename = '${yyyy}${mm}${dd}_${hh}${min}_$beanName';
+                  final filename = '$yyyy$mm${dd}_$hh${min}_$beanName';
 
                   await FileSaver.instance.saveFile(
                     name: '$filename.md',

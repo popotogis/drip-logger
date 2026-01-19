@@ -65,8 +65,9 @@ class BrewResult {
       buffer.writeln('Bean: ${bean!.name}');
       if (bean!.roaster.isNotEmpty) buffer.writeln('Roaster: ${bean!.roaster}');
       if (bean!.origin.isNotEmpty) buffer.writeln('Origin: ${bean!.origin}');
-      if (bean!.roastLevel.isNotEmpty)
+      if (bean!.roastLevel.isNotEmpty) {
         buffer.writeln('Roast: ${bean!.roastLevel}');
+      }
     }
 
     buffer.writeln('Date: ${brewedAt.toString().substring(0, 16)}');
