@@ -16,7 +16,7 @@ class CoffeeLoggerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // MaterialApp は、アプリ全体のデザインやナビゲーションを管理する大枠です
     return MaterialApp(
-      title: 'Coffee Brew Logger',
+      title: 'Drip-Logger',
 
       // アプリ全体のテーマ設定（色やフォントなど）
       theme: ThemeData(

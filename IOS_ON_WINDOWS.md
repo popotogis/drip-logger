@@ -41,7 +41,7 @@ FlutterはWebアプリとしても動作します。同じWi-Fiネットワー�
 ご自宅のMacを使って、iPhoneにアプリを直接インストールする手順です。
 
 ### 1. プロジェクトをMacに移動する
-*   現在の `CoffeeBrewLogger` フォルダを、USBメモリやクラウドストレージ(Google Drive等)経由でMacにコピーします。
+*   現在の `Drip-Logger` フォルダを、USBメモリやクラウドストレージ(Google Drive等)経由でMacにコピーします。
 
 ### 2. 環境構築 (Mac側)
 *   **Xcode**: MacのApp Storeからインストールしてください。
@@ -103,6 +103,32 @@ cd ..
 5.  **完了**
     *   ホーム画面に追加されたアイコンをタップすると、URLバーのないネイティブアプリのような全画面表示で起動します。PCがなくても動作します。
 
-## 結論
+## 方法5: GitHub Pages で公開する (リポジトリ活用)
 
-PCと繋がずに単体で利用したい場合は、**方法4 (Netlifyへのデプロイ)** が最も手軽で確実です。無料で利用可能です。
+すでにGitHubにコードを上げているので、GitHub Pages機能を使えば無料で簡単に公開できます。
+
+1.  **ビルドする**
+    ```bash
+    flutter build web --release
+    ```
+
+2.  **docsフォルダを作成して移動**
+    *   プロジェクトの直下（`d:\CoffeeBrewLogger`）に `docs` という名前のフォルダを新規作成します。
+    *   `build\web` フォルダの中身（`index.html`など全て）を、作成した `docs` フォルダの中にコピーします。
+
+3.  **Gitにコミットしてプッシュ**
+    ```bash
+    git add docs
+    git commit -m "Deploy to GitHub Pages"
+    git push
+    ```
+
+4.  **GitHubでの設定**
+    *   ブラウザでGitHubのリポジトリページを開きます。
+    *   **Settings** タブ → 左メニューの **Pages** をクリックします。
+    *   **Source** の設定:
+        *   Branch: `main`
+        *   Folder: `/docs` (ここ重要)
+    *   **Save** をクリックします。
+
+しばらく待つと、上部に公開URL (例: `https://popotogis.github.io/CoffeeBrewLogger/`) が表示されます。これをiPhoneで開いてください。
