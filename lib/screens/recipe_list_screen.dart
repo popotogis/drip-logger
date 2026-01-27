@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/recipe.dart';
 import '../repositories/recipe_repository.dart';
+import 'bean_list_screen.dart';
 import 'recipe_edit_screen.dart';
 import 'recipe_detail_screen.dart';
 
@@ -53,6 +54,17 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
             centerTitle: true,
             pinned: true,
             actions: [
+              IconButton(
+                icon: const Icon(Icons.coffee),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const BeanListScreen()),
+                  );
+                },
+                tooltip: 'Manage Beans',
+              ),
               IconButton(
                 icon: const Icon(Icons.add),
                 onPressed: _addNewRecipe,

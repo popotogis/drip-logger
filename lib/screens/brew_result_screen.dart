@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:file_saver/file_saver.dart';
 import '../models/brew_result.dart';
 import '../models/bean.dart';
-import '../repositories/bean_repository.dart';
+import 'bean_list_screen.dart';
 
 class BrewResultScreen extends StatefulWidget {
   final BrewResult result;
@@ -16,8 +16,7 @@ class BrewResultScreen extends StatefulWidget {
 }
 
 class _BrewResultScreenState extends State<BrewResultScreen> {
-  final BeanRepository _beanRepository = BeanRepository();
-  List<Bean> _beans = [];
+  // Removed _beanRepository and _beans list since we delegate to BeanListScreen
 
   late TextEditingController _noteController;
   Bean? _selectedBean;
@@ -27,81 +26,14 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
     super.initState();
     _noteController = TextEditingController(text: widget.result.notes);
     _selectedBean = widget.result.bean;
-    _loadBeans();
   }
 
-  Future<void> _loadBeans() async {
-    final beans = await _beanRepository.loadBeans();
-    if (mounted) {
-      setState(() {
-        _beans = beans;
-      });
-    }
-  }
+  // Removed _loadBeans and _showAddBeanDialog
 
   @override
   void dispose() {
     _noteController.dispose();
     super.dispose();
-  }
-
-  void _showAddBeanDialog() {
-    final nameController = TextEditingController();
-    final roasterController = TextEditingController();
-    final originController = TextEditingController();
-    final roastLevelController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add New Bean'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                  controller: nameController,
-                  decoration:
-                      const InputDecoration(labelText: 'Bean Name (Required)')),
-              TextField(
-                  controller: roasterController,
-                  decoration: const InputDecoration(labelText: 'Roaster')),
-              TextField(
-                  controller: originController,
-                  decoration: const InputDecoration(labelText: 'Origin')),
-              TextField(
-                  controller: roastLevelController,
-                  decoration: const InputDecoration(labelText: 'Roast Level')),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isEmpty) return;
-              final newBean = Bean(
-                id: DateTime.now().toString(),
-                name: nameController.text,
-                roaster: roasterController.text,
-                origin: originController.text,
-                roastLevel: roastLevelController.text,
-              );
-              setState(() {
-                _beans.add(newBean);
-                _selectedBean = newBean;
-              });
-              _beanRepository.saveBeans(_beans);
-              Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -141,36 +73,59 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
             const Text('Bean Information',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<Bean>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Bean',
-                      border: OutlineInputBorder(),
-                    ),
-                    initialValue: _selectedBean,
-                    items: _beans.map((bean) {
-                      return DropdownMenuItem(
-                        value: bean,
-                        child: Text('${bean.name} (${bean.roaster})'),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        _selectedBean = val;
-                      });
-                    },
+
+            InkWell(
+              onTap: () async {
+                final selected = await Navigator.push<Bean>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const BeanListScreen(isSelectionMode: true),
                   ),
+                );
+                if (selected != null) {
+                  setState(() {
+                    _selectedBean = selected;
+                  });
+                }
+              },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Select Bean',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  icon: const Icon(Icons.add),
-                  onPressed: _showAddBeanDialog,
-                  tooltip: 'Add New Bean',
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: _selectedBean == null
+                          ? const Text('Choose a bean...',
+                              style: TextStyle(color: Colors.grey))
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _selectedBean!.name,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                if (_selectedBean!.roaster.isNotEmpty)
+                                  Text(
+                                    _selectedBean!.roaster,
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
+                                  ),
+                              ],
+                            ),
+                    ),
+                    const Icon(Icons.arrow_drop_down),
+                  ],
                 ),
-              ],
+              ),
             ),
+
             if (_selectedBean != null)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -178,6 +133,7 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
                     'Roast: ${_selectedBean!.roastLevel} / Origin: ${_selectedBean!.origin}',
                     style: const TextStyle(color: Colors.grey)),
               ),
+
             const SizedBox(height: 24),
 
             // Steps Table

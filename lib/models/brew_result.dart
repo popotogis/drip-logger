@@ -59,20 +59,22 @@ class BrewResult {
   String toMarkdown() {
     final buffer = StringBuffer();
     buffer.writeln('# Brew Result: ${recipe.name}');
+    buffer.writeln('Date: ${brewedAt.toString().substring(0, 16)}');
+    buffer.writeln('Total Time: ${_formatDuration(totalTime)}');
+    buffer.writeln('');
 
     // Bean Info
     if (bean != null) {
-      buffer.writeln('Bean: ${bean!.name}');
+      buffer.writeln('## Bean');
+      buffer.writeln('Name: ${bean!.name}');
       if (bean!.roaster.isNotEmpty) buffer.writeln('Roaster: ${bean!.roaster}');
       if (bean!.origin.isNotEmpty) buffer.writeln('Origin: ${bean!.origin}');
       if (bean!.roastLevel.isNotEmpty) {
         buffer.writeln('Roast: ${bean!.roastLevel}');
       }
+      buffer.writeln('');
     }
 
-    buffer.writeln('Date: ${brewedAt.toString().substring(0, 16)}');
-    buffer.writeln('Total Time: ${_formatDuration(totalTime)}');
-    buffer.writeln('');
     buffer.writeln('## Details');
     buffer.writeln('| Step | Water | Time (Plan) | Time (Actual) |');
     buffer.writeln('|---|---|---|---|');

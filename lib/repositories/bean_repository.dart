@@ -15,7 +15,10 @@ class BeanRepository {
 
     try {
       final List<dynamic> jsonList = jsonDecode(jsonString);
-      return jsonList.map((json) => Bean.fromJson(json)).toList();
+      final beans = jsonList.map((json) => Bean.fromJson(json)).toList();
+      // Sort by lastUsed descending
+      beans.sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
+      return beans;
     } catch (e) {
       print('Error loading beans: $e');
       return _generateDefaultBeans();
@@ -24,8 +27,27 @@ class BeanRepository {
 
   Future<void> saveBeans(List<Bean> beans) async {
     final prefs = await SharedPreferences.getInstance();
+    // Sort before saving to be safe, or just trust load to sort? Better to sort on load.
     final String jsonString = jsonEncode(beans.map((b) => b.toJson()).toList());
     await prefs.setString(_keyBeans, jsonString);
+  }
+
+  Future<void> updateLastUsed(String id) async {
+    final beans = await loadBeans();
+    final index = beans.indexWhere((b) => b.id == id);
+    if (index != -1) {
+      final oldBean = beans[index];
+      final newBean = Bean(
+        id: oldBean.id,
+        name: oldBean.name,
+        roaster: oldBean.roaster,
+        roastLevel: oldBean.roastLevel,
+        origin: oldBean.origin,
+        lastUsed: DateTime.now(),
+      );
+      beans[index] = newBean;
+      await saveBeans(beans);
+    }
   }
 
   List<Bean> _generateDefaultBeans() {

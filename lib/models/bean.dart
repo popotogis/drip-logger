@@ -6,13 +6,16 @@ class Bean {
   final String origin; // e.g. Ethiopia
   // final String process; // e.g. Washed, Natural (Keep it simple for now)
 
+  final DateTime lastUsed;
+
   Bean({
     required this.id,
     required this.name,
     this.roaster = '',
     this.roastLevel = '',
     this.origin = '',
-  });
+    DateTime? lastUsed,
+  }) : lastUsed = lastUsed ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -20,6 +23,7 @@ class Bean {
         'roaster': roaster,
         'roastLevel': roastLevel,
         'origin': origin,
+        'lastUsed': lastUsed.toIso8601String(),
       };
 
   factory Bean.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,9 @@ class Bean {
       roaster: json['roaster'] as String? ?? '',
       roastLevel: json['roastLevel'] as String? ?? '',
       origin: json['origin'] as String? ?? '',
+      lastUsed: json['lastUsed'] != null
+          ? DateTime.parse(json['lastUsed'] as String)
+          : DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 }

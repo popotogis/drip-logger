@@ -1,6 +1,6 @@
 {
-    "name": "Coffee Brew Logger",
-    "short_name": "Brew Logger",
+    "name": "Drip-Logger",
+    "short_name": "Drip",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
