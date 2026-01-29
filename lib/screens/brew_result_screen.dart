@@ -6,6 +6,11 @@ import '../models/brew_result.dart';
 import '../models/bean.dart';
 import 'bean_list_screen.dart';
 
+/// 抽出結果画面
+///
+/// ドリップ完了後の実績データを表示します。
+/// 感想（Tasting Notes）の入力や、Markdown形式でのファイル保存/コピーが可能です。
+/// 現状はアプリ内データベースには保存せず、ファイル書き出しのみをサポートしています。
 class BrewResultScreen extends StatefulWidget {
   final BrewResult result;
 

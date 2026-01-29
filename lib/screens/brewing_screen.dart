@@ -7,6 +7,10 @@ import 'brew_result_screen.dart';
 
 import '../repositories/recipe_repository.dart';
 
+/// 抽出実行画面
+///
+/// タイマーとガイドを表示しながら、実際のドリップを行います。
+/// ステップごとの実績時間を記録し、終了後に結果画面へ遷移します。
 class BrewingScreen extends StatefulWidget {
   final Recipe recipe;
 

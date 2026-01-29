@@ -2,11 +2,20 @@ import 'recipe.dart';
 import 'bean.dart';
 
 /// ドリップの実績ステップデータ
+///
+/// 計画（レシピ）対比での実際の時間を記録します。
 class BrewResultStep {
+  /// ステップ番号 (0-indexed)
   final int stepIndex;
+
+  /// 計画していた時間
   final Duration plannedTime;
-  final Duration actualTime; // 実際にかかった時間 (ラップタイム)
-  final double waterAmount; // そのステップでの注湯量
+
+  /// 実際にかかった時間 (ラップタイム)
+  final Duration actualTime;
+
+  /// そのステップでの注湯量
+  final double waterAmount;
 
   BrewResultStep({
     required this.stepIndex,
@@ -17,14 +26,29 @@ class BrewResultStep {
 }
 
 /// ドリップ全体の実行結果
+///
+/// レシピ、豆、日時、そして実際の抽出ログをまとめて保持する集約ルート(Aggregate Root)です。
 class BrewResult {
+  /// 全世界で一意なID
   final String id;
-  final Recipe recipe; // 使用したレシピのスナップショット
-  final Bean? bean; // 使用した豆
+
+  /// 使用したレシピのスナップショット (レシピ変更の影響を受けないようにコピーを持つ)
+  final Recipe recipe;
+
+  /// 使用した豆 (nullの場合は豆指定なし)
+  final Bean? bean;
+
+  /// 抽出日時
   final DateTime brewedAt;
+
+  /// 各ステップの実績データ
   final List<BrewResultStep> steps;
+
+  /// 合計抽出時間
   final Duration totalTime;
-  final String notes; // その回の感想など
+
+  /// その回の感想・メモ
+  final String notes;
 
   BrewResult({
     required this.id,

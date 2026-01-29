@@ -1,25 +1,43 @@
 import 'brew_step.dart';
 
-// 焙煎度を表す列挙型 (Enum): 値を「浅・中・深」の3つに限定します
+/// 焙煎度を表す列挙型 (Enum)
+///
+/// 単純化のため、値を「浅・中・深」の3つに限定しています。
 enum RoastLevel {
   light, // 浅煎り
   medium, // 中煎り
   dark, // 深煎り
 }
 
-// コーヒーの抽出レシピを表すクラス
-// ユーザーの指摘により、豆の情報はここには含めず「純粋な淹れ方の手順」として定義します
+/// コーヒーの抽出レシピを表すクラス
+///
+/// 豆の情報は含めず、「純粋な淹れ方の手順」として定義します。
 class Recipe {
-  final String id; // ID
-  final String name; // レシピ名 ("4:6メソッド"、"浸漬法"など)
-  // coffeeBean, roastLevel は削除しました
+  /// レシピのID
+  final String id;
 
-  final double beanWeightGrams; // 豆の量 (g)
-  final String grindSize; // 挽き目 ("中挽き", "30 clicks"など)
-  final double? temperature; // 湯温 (℃) [任意: null許可]
-  final double totalWaterAmount; // 総湯量 (ml or g)
-  final String note; // レシピ自体のメモ ("浅煎り向け"など)
-  final List<BrewStep> steps; // 抽出ステップのリスト
+  /// レシピ名 (例: "4:6メソッド"、"浸漬法"など)
+  final String name;
+
+  /// 使用する豆の量 (g)
+  final double beanWeightGrams;
+
+  /// 挽き目 (例: "中挽き", "30 clicks"など)
+  final String grindSize;
+
+  /// 湯温 (℃) [任意]
+  final double? temperature;
+
+  /// 総湯量 (ml or g)
+  final double totalWaterAmount;
+
+  /// レシピ自体のメモ (例: "浅煎り向け"など)
+  final String note;
+
+  /// 抽出ステップのリスト
+  final List<BrewStep> steps;
+
+  /// 最後に使用した日時
   final DateTime lastUsed;
 
   Recipe({

@@ -1,11 +1,25 @@
+/// コーヒー豆の情報を表すモデルクラス
+///
+/// 豆の名称、焙煎所、焙煎度、産地などの基本情報を保持します。
 class Bean {
+  /// 豆のID (UUID v4などを想定)
   final String id;
-  final String name;
-  final String roaster;
-  final String roastLevel; // e.g. Light, Medium, Dark
-  final String origin; // e.g. Ethiopia
-  // final String process; // e.g. Washed, Natural (Keep it simple for now)
 
+  /// 豆の名前 (例: "エチオピア イルガチェフェ")
+  final String name;
+
+  /// 焙煎所・店舗名 (例: "Blue Bottle Coffee")
+  final String roaster;
+
+  /// 焙煎度 (例: "Light", "Medium", "Dark" / "浅煎り", "中煎り", "深煎り")
+  final String roastLevel;
+
+  /// 産地 (例: "Ethiopia", "Colombia")
+  final String origin;
+
+  // final String process; // e.g. Washed, Natural (将来的に拡張予定)
+
+  /// 最後に使用した日時 (リストの並び替えなどで使用)
   final DateTime lastUsed;
 
   Bean({

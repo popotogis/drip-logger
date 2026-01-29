@@ -3,10 +3,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/recipe.dart';
 import '../models/brew_step.dart';
 
+/// レシピ情報の永続化を担当するリポジトリ
+///
+/// SharedPreferenceを使用して、JSON形式でローカルにデータを保存します。
 class RecipeRepository {
   static const String _keyRecipes = 'recipes';
 
-  // Load recipes from storage
+  /// 保存されたレシピリストを読み込みます
+  ///
+  /// データがない場合はデフォルトデータを返します。
+  /// [lastUsed] の降順（新しい順）でソートして返却します。
   Future<List<Recipe>> loadRecipes() async {
     final prefs = await SharedPreferences.getInstance();
     final String? jsonString = prefs.getString(_keyRecipes);
@@ -28,7 +34,7 @@ class RecipeRepository {
     }
   }
 
-  // Save recipes to storage
+  /// レシピリストを保存します
   Future<void> saveRecipes(List<Recipe> recipes) async {
     final prefs = await SharedPreferences.getInstance();
     final String jsonString =
@@ -36,6 +42,7 @@ class RecipeRepository {
     await prefs.setString(_keyRecipes, jsonString);
   }
 
+  /// 特定のレシピの使用日時を更新し、リストの先頭に来るようにします
   Future<void> updateLastUsed(String recipeId) async {
     final recipes = await loadRecipes();
     final index = recipes.indexWhere((r) => r.id == recipeId);
@@ -58,7 +65,7 @@ class RecipeRepository {
     }
   }
 
-  // Default Initial Data
+  /// 初期データ（サンプル）を生成します
   List<Recipe> _generateDefaultRecipes() {
     return [
       Recipe(

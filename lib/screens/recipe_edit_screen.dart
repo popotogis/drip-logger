@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../models/brew_step.dart';
 
+/// レシピ編集・新規作成画面
+///
+/// レシピの基本情報（名前、粉量など）と、抽出ステップ（リスト）の編集を行います。
+/// ステップの増減や時間・湯量の調整が可能です。
 class RecipeEditScreen extends StatefulWidget {
   final Recipe? recipe; // 編集用のレシピ (nullなら新規作成)
 

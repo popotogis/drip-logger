@@ -3,6 +3,10 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/bean.dart';
 import '../repositories/bean_repository.dart';
 
+/// 豆リスト管理画面
+///
+/// 保存されているコーヒー豆のリスト表示、追加、編集、削除を行います。
+/// [isSelectionMode] が true の場合は、抽出結果に紐づける豆を選択するモードとして動作します。
 class BeanListScreen extends StatefulWidget {
   final bool isSelectionMode;
 

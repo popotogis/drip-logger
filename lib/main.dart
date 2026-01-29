@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'screens/recipe_list_screen.dart';
 
-// アプリの開始地点 (Entry Point)
+/// アプリの開始地点 (Entry Point)
 void main() {
   // CoffeeLoggerApp という「ウィジェット（部品）」を起動します
   runApp(const CoffeeLoggerApp());
 }
 
-// アプリ全体を表すクラス
-// StatelessWidget は「動的に変化する状態を持たない」部品です
+/// アプリ全体を表すクラス
+///
+/// テーマ設定やルーティングを一元管理します。
+/// [StatelessWidget] は「動的に変化する状態を持たない」部品です。
 class CoffeeLoggerApp extends StatelessWidget {
   const CoffeeLoggerApp({super.key});
 

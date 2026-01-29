@@ -2,9 +2,16 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/bean.dart';
 
+/// 豆情報の永続化（保存・読み出し）を担当するリポジトリ
+///
+/// SharedPreferenceを使用して、JSON形式でローカルにデータを保存します。
 class BeanRepository {
   static const String _keyBeans = 'beans';
 
+  /// 保存された豆リストを読み込みます
+  ///
+  /// データがない場合はデフォルトデータを返します。
+  /// [lastUsed] の降順（新しい順）でソートして返却します。
   Future<List<Bean>> loadBeans() async {
     final prefs = await SharedPreferences.getInstance();
     final String? jsonString = prefs.getString(_keyBeans);
@@ -25,6 +32,7 @@ class BeanRepository {
     }
   }
 
+  /// 豆リストを保存します
   Future<void> saveBeans(List<Bean> beans) async {
     final prefs = await SharedPreferences.getInstance();
     // Sort before saving to be safe, or just trust load to sort? Better to sort on load.
@@ -32,6 +40,7 @@ class BeanRepository {
     await prefs.setString(_keyBeans, jsonString);
   }
 
+  /// 特定の豆の使用日時を更新し、リストの先頭に来るようにします
   Future<void> updateLastUsed(String id) async {
     final beans = await loadBeans();
     final index = beans.indexWhere((b) => b.id == id);
@@ -50,6 +59,7 @@ class BeanRepository {
     }
   }
 
+  /// 初期データ（サンプル）を生成します
   List<Bean> _generateDefaultBeans() {
     return [
       Bean(

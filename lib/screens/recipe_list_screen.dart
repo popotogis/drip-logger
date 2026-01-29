@@ -6,6 +6,9 @@ import 'bean_list_screen.dart';
 import 'recipe_edit_screen.dart';
 import 'recipe_detail_screen.dart';
 
+/// レシピ一覧画面 (ホーム画面)
+///
+/// 保存されているレシピをリスト表示し、新規作成や豆管理画面への遷移を提供します。
 class RecipeListScreen extends StatefulWidget {
   const RecipeListScreen({super.key});
 

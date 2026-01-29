@@ -3,6 +3,9 @@ import '../models/recipe.dart';
 import 'recipe_edit_screen.dart';
 import 'brewing_screen.dart';
 
+/// レシピ詳細画面
+///
+/// レシピの内容（豆量、湯量、ステップなど）を表示し、編集や抽出開始（Brewing）への遷移を提供します。
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
 
