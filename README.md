@@ -1,4 +1,4 @@
-# coffee_brew_logger
+# Drip Logger
 コーヒーのハンドドリップのログを記録するためのアプリ
 
 ## 何をするアプリか
