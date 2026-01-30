@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/recipe.dart';
 import '../models/brew_step.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// レシピ情報の永続化を担当するリポジトリ
 ///
@@ -98,3 +99,7 @@ class RecipeRepository {
     ];
   }
 }
+
+final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
+  return RecipeRepository();
+});

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'screens/recipe_list_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// アプリの開始地点 (Entry Point)
 void main() {
-  // CoffeeLoggerApp という「ウィジェット（部品）」を起動します
-  runApp(const CoffeeLoggerApp());
+  runApp(const ProviderScope(
+    child: CoffeeLoggerApp(),
+  ));
 }
 
 /// アプリ全体を表すクラス

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe.dart';
 import '../repositories/recipe_repository.dart';
 import 'bean_list_screen.dart';
@@ -9,15 +10,14 @@ import 'recipe_detail_screen.dart';
 /// レシピ一覧画面 (ホーム画面)
 ///
 /// 保存されているレシピをリスト表示し、新規作成や豆管理画面への遷移を提供します。
-class RecipeListScreen extends StatefulWidget {
+class RecipeListScreen extends ConsumerStatefulWidget {
   const RecipeListScreen({super.key});
 
   @override
-  State<RecipeListScreen> createState() => _RecipeListScreenState();
+  ConsumerState<RecipeListScreen> createState() => _RecipeListScreenState();
 }
 
-class _RecipeListScreenState extends State<RecipeListScreen> {
-  final RecipeRepository _repository = RecipeRepository();
+class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   List<Recipe> _recipes = [];
   bool _isLoading = true;
 
@@ -28,7 +28,8 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   Future<void> _loadRecipes() async {
-    final recipes = await _repository.loadRecipes();
+    final repository = ref.read(recipeRepositoryProvider);
+    final recipes = await repository.loadRecipes();
     if (mounted) {
       setState(() {
         _recipes = recipes;
@@ -38,7 +39,8 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   Future<void> _saveRecipes() async {
-    await _repository.saveRecipes(_recipes);
+    final repository = ref.read(recipeRepositoryProvider);
+    await repository.saveRecipes(_recipes);
   }
 
   @override
