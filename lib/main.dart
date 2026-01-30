@@ -27,7 +27,6 @@ class CoffeeLoggerApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.orange,
-          background: Colors.grey[100]!,
           surface: Colors.white,
         ),
         scaffoldBackgroundColor: Colors.grey[100],

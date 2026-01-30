@@ -112,7 +112,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
               // Reload to ensure sort (though for add/edit we might not need re-sort immediately, but let's be consistent)
               await _loadBeans();
 
-              if (mounted) Navigator.pop(context);
+              if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Save'),
           ),
@@ -163,7 +163,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
                             _beans.removeAt(index);
                           });
                           await _saveBeans();
-                          if (mounted) {
+                          if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('$deletedName deleted')),
                             );
@@ -194,7 +194,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
                       if (widget.isSelectionMode) {
                         // Update last used
                         await _repository.updateLastUsed(bean.id);
-                        if (mounted) {
+                        if (context.mounted) {
                           Navigator.pop(context, bean);
                         }
                       } else {

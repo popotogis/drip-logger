@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/recipe.dart';
 import '../models/brew_step.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// レシピ情報の永続化を担当するリポジトリ
@@ -30,7 +31,7 @@ class RecipeRepository {
       return recipes;
     } catch (e) {
       // If error (e.g. format change), return defaults or empty
-      print('Error loading recipes: $e');
+      debugPrint('Error loading recipes: $e');
       return _generateDefaultRecipes();
     }
   }

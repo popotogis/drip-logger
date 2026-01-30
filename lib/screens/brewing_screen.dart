@@ -326,6 +326,6 @@ class _BrewingScreenState extends State<BrewingScreen> {
     final minutes = twoDigits(d.inMinutes.remainder(60));
     final seconds = twoDigits(d.inSeconds.remainder(60));
     final milliseconds = (d.inMilliseconds.remainder(1000) ~/ 100).toString();
-    return "$minutes:$seconds.$milliseconds";
+    return '$minutes:$seconds.$milliseconds';
   }
 }

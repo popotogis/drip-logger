@@ -73,7 +73,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         Navigator.pop(context, _recipe);
       },

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/bean.dart';
@@ -27,7 +28,7 @@ class BeanRepository {
       beans.sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
       return beans;
     } catch (e) {
-      print('Error loading beans: $e');
+      debugPrint('Error loading beans: $e');
       return _generateDefaultBeans();
     }
   }
