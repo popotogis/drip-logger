@@ -9,10 +9,11 @@
     - [x] `roastDate` (焙煎日) -> `DateTime?`
 
   - **Recipeモデル拡張**:
-    - 抽出環境の柔軟性向上。
-    - `dripper` (ドリッパー: V60, Kalita etc.) -> `String?`
-    - `grinder` (グラインダー: Comandante, EK43 etc.) -> `String?`
-    - `filter` (フィルター: Abaca, Stainless etc.) -> `String?`
+    - [x] 抽出環境の柔軟性向上。
+    - [x] `dripper` (ドリッパー: V60, Kalita etc.) -> `String?`
+    - [x] `grinder` (グラインダー: Comandante, EK43 etc.) -> `String?`
+    - [x] `filter` (フィルター: Abaca, Stainless etc.) -> `String?`
+
     - 将来的には `Map<String, String>` で無限に拡張可能にする構想も持つが、まずは主要な3つを実装。
 
 

@@ -129,7 +129,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               _buildGroupedSection(children: [
                 _buildInfoRow('Bean', '${_recipe.beanWeightGrams}g'),
                 _buildInfoRow('Water', '${_recipe.totalWaterAmount}ml'),
+                if (_recipe.grinder != null && _recipe.grinder!.isNotEmpty)
+                  _buildInfoRow('Grinder', _recipe.grinder!),
                 _buildInfoRow('Grind', _recipe.grindSize),
+                if (_recipe.dripper != null && _recipe.dripper!.isNotEmpty)
+                  _buildInfoRow('Dripper', _recipe.dripper!),
+                if (_recipe.filter != null && _recipe.filter!.isNotEmpty)
+                  _buildInfoRow('Filter', _recipe.filter!),
                 _buildInfoRow('Total Time', _calculateTotalTime(),
                     isLast: (_recipe.note?.isEmpty ?? true)),
                 if (_recipe.note != null && _recipe.note!.isNotEmpty)

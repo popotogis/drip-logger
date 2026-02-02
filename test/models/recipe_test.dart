@@ -54,5 +54,26 @@ void main() {
 
       expect(decoded.note, null);
     });
+
+    test('shoud support equipment fields (dripper, grinder, filter)', () {
+      final advancedRecipe = Recipe(
+        id: 'adv-recipe-1',
+        name: 'V60 Ultimate',
+        beanWeightGrams: 15,
+        grindSize: 'Medium',
+        totalWaterAmount: 225,
+        steps: [],
+        dripper: 'Hario V60 Plastic',
+        grinder: 'Comandante C40',
+        filter: 'Abaca',
+      );
+
+      final json = advancedRecipe.toJson();
+      final decoded = Recipe.fromJson(json);
+
+      expect(decoded.dripper, 'Hario V60 Plastic');
+      expect(decoded.grinder, 'Comandante C40');
+      expect(decoded.filter, 'Abaca');
+    });
   });
 }

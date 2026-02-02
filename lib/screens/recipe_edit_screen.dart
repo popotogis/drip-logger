@@ -21,7 +21,10 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
   // 基本パラメータ
   late String _name;
   late double _beanWeightGrams;
+  late String _grinder;
   late String _grindSize;
+  late String _dripper;
+  late String _filter;
   late double _totalWaterAmount;
   late String _note;
 
@@ -35,7 +38,10 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
     if (r != null) {
       _name = r.name;
       _beanWeightGrams = r.beanWeightGrams;
+      _grinder = r.grinder ?? '';
       _grindSize = r.grindSize;
+      _dripper = r.dripper ?? '';
+      _filter = r.filter ?? '';
       _totalWaterAmount = r.totalWaterAmount;
       _note = r.note ?? '';
       // リストはコピーを作成して、編集中の変更が元データに即座に影響しないようにする
@@ -43,7 +49,10 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
     } else {
       _name = '';
       _beanWeightGrams = 0;
+      _grinder = '';
       _grindSize = '';
+      _dripper = '';
+      _filter = '';
       _totalWaterAmount = 0;
       _note = '';
       _steps = [];
@@ -111,7 +120,10 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
       id: id,
       name: name,
       beanWeightGrams: _beanWeightGrams,
+      grinder: _grinder.isEmpty ? null : _grinder,
       grindSize: _grindSize,
+      dripper: _dripper.isEmpty ? null : _dripper,
+      filter: _filter.isEmpty ? null : _filter,
       totalWaterAmount: _totalWaterAmount,
       note: _note,
       steps: _steps,
@@ -197,9 +209,26 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                       _beanWeightGrams = double.tryParse(value ?? '') ?? 0,
                 ),
                 TextFormField(
+                  initialValue: _grinder,
+                  decoration:
+                      const InputDecoration(labelText: 'Grinder (e.g. C40)'),
+                  onSaved: (value) => _grinder = value ?? '',
+                ),
+                TextFormField(
                   initialValue: _grindSize,
                   decoration: const InputDecoration(labelText: 'Grind Size'),
                   onSaved: (value) => _grindSize = value ?? '',
+                ),
+                TextFormField(
+                  initialValue: _dripper,
+                  decoration:
+                      const InputDecoration(labelText: 'Dripper (e.g. V60)'),
+                  onSaved: (value) => _dripper = value ?? '',
+                ),
+                TextFormField(
+                  initialValue: _filter,
+                  decoration: const InputDecoration(labelText: 'Filter'),
+                  onSaved: (value) => _filter = value ?? '',
                 ),
                 TextFormField(
                   initialValue:
