@@ -49,6 +49,10 @@ class _BeanListScreenState extends State<BeanListScreen> {
     final roasterController = TextEditingController(text: bean?.roaster);
     final originController = TextEditingController(text: bean?.origin);
     final roastLevelController = TextEditingController(text: bean?.roastLevel);
+    final processController = TextEditingController(text: bean?.process);
+    final varietyController = TextEditingController(text: bean?.variety);
+
+    DateTime? selectedDate = bean?.roastDate;
 
     showDialog(
       context: context,
@@ -76,6 +80,55 @@ class _BeanListScreenState extends State<BeanListScreen> {
                 controller: roastLevelController,
                 decoration: const InputDecoration(labelText: 'Roast Level'),
               ),
+              TextField(
+                controller: processController,
+                decoration:
+                    const InputDecoration(labelText: 'Process (e.g. washed)'),
+              ),
+              TextField(
+                controller: varietyController,
+                decoration:
+                    const InputDecoration(labelText: 'Variety (e.g. Geisha)'),
+              ),
+              const SizedBox(height: 16),
+
+              // Date Picker
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today,
+                      size: 20, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          selectedDate = picked;
+                        });
+                      }
+                    },
+                    child: Text(
+                      selectedDate == null
+                          ? 'Selected Roast Date'
+                          : 'Roast Date: ${selectedDate!.toString().split(' ')[0]}',
+                    ),
+                  ),
+                  if (selectedDate != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      onPressed: () {
+                        setState(() {
+                          selectedDate = null;
+                        });
+                      },
+                    ),
+                ],
+              ),
             ],
           ),
         ),
@@ -94,6 +147,13 @@ class _BeanListScreenState extends State<BeanListScreen> {
                 roaster: roasterController.text,
                 origin: originController.text,
                 roastLevel: roastLevelController.text,
+                process: processController.text.isEmpty
+                    ? null
+                    : processController.text,
+                variety: varietyController.text.isEmpty
+                    ? null
+                    : varietyController.text,
+                roastDate: selectedDate,
                 lastUsed: bean?.lastUsed,
               );
 

@@ -1,14 +1,20 @@
 # 開発ロードマップ
 
 ## 機能
-- [ ] **詳細な焙煎度 (8段階) の実装**
-  - **現状**: 3段階（Light, Medium, Dark）の `String` または `Enum`。
-  - **目標**: SCAA基準などに基づいた8段階（Light, Cinnamon, Medium, High, City, Full City, French, Italian）への拡張。
-  - **実装ステップ**:
-    1. `RoastLevel` Enumの拡張。
-    2. `Recipe` および `Bean` モデルの更新。
-    3. UIの更新（ドロップダウンからスライダー、または専用の選択ダイアログへ変更）。
-    4. 既存データのマイグレーション（必要であれば）。
+- [ ] **高度なデータモデル (Freak Mode)**
+  - **目標**: コーヒーマニア（フリーク）の要求に応えつつ、一般ユーザーには負担をかけない柔軟な構造。
+  - **Beanモデル拡張**:
+    - [x] `process` (精製: Washed, Natural etc.) -> `String?`
+    - [x] `variety` (品種: Geisha, Bourbon etc.) -> `String?`
+    - [x] `roastDate` (焙煎日) -> `DateTime?`
+
+  - **Recipeモデル拡張**:
+    - 抽出環境の柔軟性向上。
+    - `dripper` (ドリッパー: V60, Kalita etc.) -> `String?`
+    - `grinder` (グラインダー: Comandante, EK43 etc.) -> `String?`
+    - `filter` (フィルター: Abaca, Stainless etc.) -> `String?`
+    - 将来的には `Map<String, String>` で無限に拡張可能にする構想も持つが、まずは主要な3つを実装。
+
 
 - [x] **データモデルのリファクタリング (TDD)**
   - **目標**: `Recipe.note` を `String` から `String?` (null許容) に変更する。

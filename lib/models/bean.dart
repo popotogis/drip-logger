@@ -17,7 +17,14 @@ class Bean {
   /// 産地 (例: "Ethiopia", "Colombia")
   final String origin;
 
-  // final String process; // e.g. Washed, Natural (将来的に拡張予定)
+  /// 精製方法（例: "Washed", "Natural"）
+  final String? process;
+
+  /// 品種（例: "Geisha", "Bourbon"）
+  final String? variety;
+
+  /// 焙煎日
+  final DateTime? roastDate;
 
   /// 最後に使用した日時 (リストの並び替えなどで使用)
   final DateTime lastUsed;
@@ -28,6 +35,9 @@ class Bean {
     this.roaster = '',
     this.roastLevel = '',
     this.origin = '',
+    this.process,
+    this.variety,
+    this.roastDate,
     DateTime? lastUsed,
   }) : lastUsed = lastUsed ?? DateTime.now();
 
@@ -37,6 +47,9 @@ class Bean {
         'roaster': roaster,
         'roastLevel': roastLevel,
         'origin': origin,
+        'process': process,
+        'variety': variety,
+        'roastDate': roastDate?.toIso8601String(),
         'lastUsed': lastUsed.toIso8601String(),
       };
 
@@ -47,6 +60,11 @@ class Bean {
       roaster: json['roaster'] as String? ?? '',
       roastLevel: json['roastLevel'] as String? ?? '',
       origin: json['origin'] as String? ?? '',
+      process: json['process'] as String?,
+      variety: json['variety'] as String?,
+      roastDate: json['roastDate'] != null
+          ? DateTime.parse(json['roastDate'] as String)
+          : null,
       lastUsed: json['lastUsed'] != null
           ? DateTime.parse(json['lastUsed'] as String)
           : DateTime.fromMillisecondsSinceEpoch(0),
