@@ -191,7 +191,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                 // --- 基本情報入力 ---
                 TextFormField(
                   initialValue: _name,
-                  decoration: const InputDecoration(labelText: 'Recipe Name'),
+                  decoration: const InputDecoration(labelText: 'Recipe Name *'),
                   validator: (value) =>
                       (value == null || value.isEmpty) ? 'Required' : null,
                   onSaved: (value) => _name = value ?? '',
@@ -201,7 +201,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                   initialValue:
                       _beanWeightGrams > 0 ? _beanWeightGrams.toString() : '',
                   decoration:
-                      const InputDecoration(labelText: 'Bean Weight (g)'),
+                      const InputDecoration(labelText: 'Bean Weight (g) *'),
                   keyboardType: TextInputType.number,
                   validator: (value) =>
                       (value == null || value.isEmpty) ? 'Required' : null,
@@ -234,7 +234,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                   initialValue:
                       _totalWaterAmount > 0 ? _totalWaterAmount.toString() : '',
                   decoration:
-                      const InputDecoration(labelText: 'Total Water (ml)'),
+                      const InputDecoration(labelText: 'Total Water (ml) *'),
                   keyboardType: TextInputType.number,
                   validator: (value) =>
                       (value == null || value.isEmpty) ? 'Required' : null,

@@ -64,8 +64,7 @@ class _BeanListScreenState extends State<BeanListScreen> {
             children: [
               TextField(
                 controller: nameController,
-                decoration:
-                    const InputDecoration(labelText: 'Bean Name (Required)'),
+                decoration: const InputDecoration(labelText: 'Bean Name *'),
                 autofocus: true,
               ),
               TextField(
