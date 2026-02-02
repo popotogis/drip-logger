@@ -52,6 +52,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     }
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addNewRecipe,
+        child: const Icon(Icons.add),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -69,11 +73,6 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                   );
                 },
                 tooltip: 'Manage Beans',
-              ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: _addNewRecipe,
-                tooltip: 'Add Recipe',
               ),
             ],
           ),
