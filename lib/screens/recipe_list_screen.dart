@@ -123,11 +123,11 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                               style: TextStyle(
                                   fontSize: 15, color: Colors.grey[600]),
                             ),
-                            if (recipe.note.isNotEmpty)
+                            if (recipe.note != null && recipe.note!.isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
                                 child: Text(
-                                  recipe.note,
+                                  recipe.note!,
                                   style: TextStyle(
                                       fontSize: 13,
                                       color: Colors.grey[500],

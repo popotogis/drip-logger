@@ -131,9 +131,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 _buildInfoRow('Water', '${_recipe.totalWaterAmount}ml'),
                 _buildInfoRow('Grind', _recipe.grindSize),
                 _buildInfoRow('Total Time', _calculateTotalTime(),
-                    isLast: _recipe.note.isEmpty),
-                if (_recipe.note.isNotEmpty)
-                  _buildInfoRow('Note', _recipe.note, isLast: true),
+                    isLast: (_recipe.note?.isEmpty ?? true)),
+                if (_recipe.note != null && _recipe.note!.isNotEmpty)
+                  _buildInfoRow('Note', _recipe.note!, isLast: true),
               ]),
               const SizedBox(height: 24),
 

@@ -37,5 +37,22 @@ void main() {
       expect(decodedRecipe.steps.length, 1);
       expect(decodedRecipe.steps.first.waterAmount, 50);
     });
+
+    test('should allow null note', () {
+      final jsonMap = {
+        'id': 'null-note-id',
+        'name': 'Null Note Recipe',
+        'beanWeightGrams': 15,
+        'grindSize': 'Medium',
+        'totalWaterAmount': 200,
+        'steps': [],
+        'note': null,
+        'lastUsed': DateTime.now().toIso8601String(),
+      };
+
+      final decoded = Recipe.fromJson(jsonMap);
+
+      expect(decoded.note, null);
+    });
   });
 }

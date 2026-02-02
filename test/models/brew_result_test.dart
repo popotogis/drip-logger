@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drip_logger/models/brew_result.dart';
 import 'package:drip_logger/models/recipe.dart';
 import 'package:drip_logger/models/bean.dart';
-import 'package:drip_logger/models/brew_step.dart';
 
 void main() {
   group('BrewResult Model Tests', () {

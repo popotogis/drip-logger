@@ -32,7 +32,7 @@ class Recipe {
   final double totalWaterAmount;
 
   /// レシピ自体のメモ (例: "浅煎り向け"など)
-  final String note;
+  final String? note;
 
   /// 抽出ステップのリスト
   final List<BrewStep> steps;
@@ -47,7 +47,7 @@ class Recipe {
     required this.grindSize,
     this.temperature, // requiredではない (= nullでもOK)
     required this.totalWaterAmount,
-    this.note = '', // デフォルトは空文字
+    this.note, // デフォルトは空文字
     required this.steps,
     DateTime? lastUsed,
   }) : lastUsed = lastUsed ?? DateTime.now();
@@ -72,7 +72,7 @@ class Recipe {
       grindSize: json['grindSize'] as String,
       temperature: (json['temperature'] as num?)?.toDouble(),
       totalWaterAmount: (json['totalWaterAmount'] as num).toDouble(),
-      note: json['note'] as String? ?? '',
+      note: json['note'] as String?,
       steps: (json['steps'] as List)
           .map((e) => BrewStep.fromJson(e as Map<String, dynamic>))
           .toList(),

@@ -37,7 +37,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
       _beanWeightGrams = r.beanWeightGrams;
       _grindSize = r.grindSize;
       _totalWaterAmount = r.totalWaterAmount;
-      _note = r.note;
+      _note = r.note ?? '';
       // リストはコピーを作成して、編集中の変更が元データに即座に影響しないようにする
       _steps = List.from(r.steps);
     } else {
