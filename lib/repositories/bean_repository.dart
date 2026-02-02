@@ -68,12 +68,18 @@ class BeanRepository {
           name: 'Ethiopia Yirgacheffe',
           roaster: 'The Barn',
           roastLevel: 'Light',
-          origin: 'Ethiopia'),
+          origin: 'Ethiopia',
+          process: 'Washed',
+          variety: 'Heirloom',
+          roastDate: DateTime.now().subtract(const Duration(days: 7))),
       Bean(
           id: '2',
           name: 'Colombia Excelso',
           roaster: 'Local Roaster',
-          roastLevel: 'Medium'),
+          roastLevel: 'Medium',
+          process: 'Washed',
+          variety: 'Caturra',
+          roastDate: DateTime.now().subtract(const Duration(days: 14))),
     ];
   }
 }

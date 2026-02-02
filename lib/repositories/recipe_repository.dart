@@ -84,6 +84,9 @@ class RecipeRepository {
           BrewStep(waterAmount: 60, waitTime: const Duration(seconds: 45)),
         ],
         note: 'Sweet and Clean cup.',
+        dripper: 'V60',
+        grinder: 'Comandante',
+        filter: 'Abaca',
       ),
       Recipe(
         id: '2',
@@ -96,6 +99,9 @@ class RecipeRepository {
           BrewStep(waterAmount: 195, waitTime: const Duration(seconds: 120)),
         ],
         note: 'Daily easy brew.',
+        dripper: 'Kalita Wave',
+        grinder: 'Baratza Encore',
+        filter: 'Kalita 155',
       ),
     ];
   }

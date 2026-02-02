@@ -85,6 +85,17 @@ class BrewResult {
     buffer.writeln('# Brew Result: ${recipe.name}');
     buffer.writeln('Date: ${brewedAt.toString().substring(0, 16)}');
     buffer.writeln('Total Time: ${_formatDuration(totalTime)}');
+
+    // Recipe Extras
+    if (recipe.dripper != null && recipe.dripper!.isNotEmpty) {
+      buffer.writeln('Dripper: ${recipe.dripper}');
+    }
+    if (recipe.grinder != null && recipe.grinder!.isNotEmpty) {
+      buffer.writeln('Grinder: ${recipe.grinder}');
+    }
+    if (recipe.filter != null && recipe.filter!.isNotEmpty) {
+      buffer.writeln('Filter: ${recipe.filter}');
+    }
     buffer.writeln('');
 
     // Bean Info
@@ -95,6 +106,16 @@ class BrewResult {
       if (bean!.origin.isNotEmpty) buffer.writeln('Origin: ${bean!.origin}');
       if (bean!.roastLevel.isNotEmpty) {
         buffer.writeln('Roast: ${bean!.roastLevel}');
+      }
+      if (bean!.process != null && bean!.process!.isNotEmpty) {
+        buffer.writeln('Process: ${bean!.process}');
+      }
+      if (bean!.variety != null && bean!.variety!.isNotEmpty) {
+        buffer.writeln('Variety: ${bean!.variety}');
+      }
+      if (bean!.roastDate != null) {
+        buffer.writeln(
+            'Roast Date: ${bean!.roastDate.toString().substring(0, 10)}');
       }
       buffer.writeln('');
     }

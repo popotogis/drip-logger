@@ -244,7 +244,11 @@ class _BeanListScreenState extends State<BeanListScreen> {
                       [
                         if (bean.roaster.isNotEmpty) bean.roaster,
                         if (bean.origin.isNotEmpty) bean.origin,
-                        if (bean.roastLevel.isNotEmpty) bean.roastLevel
+                        if (bean.roastLevel.isNotEmpty) bean.roastLevel,
+                        if (bean.process != null && bean.process!.isNotEmpty)
+                          bean.process!,
+                        if (bean.variety != null && bean.variety!.isNotEmpty)
+                          bean.variety!,
                       ].join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
