@@ -30,8 +30,9 @@
    - ユニットテスト (`flutter_test`) を書いてみる。
 
 
-4. [ ] **リポジトリのテスト (Mockの活用)**
+4. [x] **リポジトリのテスト (Mockの活用)**
    - **目標**: `RecipeRepository` の保存・読み込みロジックをテストする。
+
    - **手法**:
      - `shared_preferences` のモック機能 (`setMockInitialValues`) を使用。
      - 実機に依存せず、CI/CD環境でも実行可能なテストを作成する。
