@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import '../models/recipe.dart';
 import '../repositories/recipe_repository.dart';
+import '../utils/recipe_sharer.dart';
 import 'bean_list_screen.dart';
 import 'recipe_edit_screen.dart';
 import 'recipe_detail_screen.dart';
@@ -43,6 +45,64 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     await repository.saveRecipes(_recipes);
   }
 
+  // レシピimport用
+  Future<void> _importRecipe() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text;
+
+    if (text == null || text.isEmpty) return;
+
+    final recipe = RecipeSharer.decode(text);
+    if (recipe != null) {
+      if (!mounted) return;
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Import Recipe'),
+          content: Text('Do you want to import "${recipe.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Import'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true) {
+        if (!mounted) return;
+        final savedRecipe = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RecipeEditScreen(recipe: recipe),
+          ),
+        );
+
+        if (savedRecipe != null) {
+          // Add or Update locally
+          final index = _recipes.indexWhere((r) => r.id == savedRecipe.id);
+          if (index != -1) {
+            _recipes[index] = savedRecipe;
+          } else {
+            _recipes.add(savedRecipe);
+          }
+          await _saveRecipes();
+          await _loadRecipes();
+        }
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid recipe code')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -63,6 +123,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
             centerTitle: true,
             pinned: true,
             actions: [
+              IconButton(
+                  icon: const Icon(Icons.download),
+                  onPressed: _importRecipe,
+                  tooltip: 'Import Recipe'),
               IconButton(
                 icon: const Icon(Icons.coffee),
                 onPressed: () {

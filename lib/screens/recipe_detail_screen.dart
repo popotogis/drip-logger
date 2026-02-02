@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/recipe.dart';
+import '../utils/recipe_sharer.dart';
 import 'recipe_edit_screen.dart';
 import 'brewing_screen.dart';
 
@@ -98,6 +100,21 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               },
               child: const Text('Edit', style: TextStyle(fontSize: 17)),
             ),
+            IconButton(
+              icon: const Icon(Icons.share),
+              onPressed: () async {
+                final code = RecipeSharer.encode(_recipe);
+                if (code.isNotEmpty) {
+                  await Clipboard.setData(ClipboardData(text: code));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Recipe copied to clipboard!')),
+                    );
+                  }
+                }
+              },
+            )
           ],
         ),
         body: SingleChildScrollView(
