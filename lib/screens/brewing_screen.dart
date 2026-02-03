@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 // for FontFeature
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recipe.dart';
 import '../models/brew_result.dart';
 import 'brew_result_screen.dart';
 
 import '../repositories/recipe_repository.dart';
+import '../repositories/brew_result_repository.dart';
 
 /// 抽出実行画面
 ///
 /// タイマーとガイドを表示しながら、実際のドリップを行います。
 /// ステップごとの実績時間を記録し、終了後に結果画面へ遷移します。
-class BrewingScreen extends StatefulWidget {
+class BrewingScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
 
   const BrewingScreen({super.key, required this.recipe});
 
   @override
-  State<BrewingScreen> createState() => _BrewingScreenState();
+  ConsumerState<BrewingScreen> createState() => _BrewingScreenState();
 }
 
-class _BrewingScreenState extends State<BrewingScreen> {
+class _BrewingScreenState extends ConsumerState<BrewingScreen> {
   // Timer State
   Timer? _timer;
   final Stopwatch _stopwatch = Stopwatch();
@@ -114,16 +116,21 @@ class _BrewingScreenState extends State<BrewingScreen> {
     });
   }
 
-  void _finishBrewing() {
+  Future<void> _finishBrewing() async {
     _stopTimer();
 
     final result = BrewResult(
-      id: DateTime.now().toString(),
+      id: DateTime.now().toString(), // Improved ID generation recommended later
       recipe: widget.recipe,
       brewedAt: _brewStartTime ?? DateTime.now(),
       steps: _resultSteps,
       totalTime: _elapsed,
     );
+
+    // Save to DB
+    await ref.read(brewResultRepositoryProvider).addResult(result);
+
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,

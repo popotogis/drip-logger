@@ -2,27 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:file_saver/file_saver.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/brew_result.dart';
 import '../models/bean.dart';
+import '../repositories/brew_result_repository.dart';
 import 'bean_list_screen.dart';
 
 /// 抽出結果画面
 ///
 /// ドリップ完了後の実績データを表示します。
 /// 感想（Tasting Notes）の入力や、Markdown形式でのファイル保存/コピーが可能です。
-/// 現状はアプリ内データベースには保存せず、ファイル書き出しのみをサポートしています。
-class BrewResultScreen extends StatefulWidget {
+/// 画面を離れる際やアクション実行時に、DB上のデータを更新します。
+class BrewResultScreen extends ConsumerStatefulWidget {
   final BrewResult result;
 
   const BrewResultScreen({super.key, required this.result});
 
   @override
-  State<BrewResultScreen> createState() => _BrewResultScreenState();
+  ConsumerState<BrewResultScreen> createState() => _BrewResultScreenState();
 }
 
-class _BrewResultScreenState extends State<BrewResultScreen> {
-  // Removed _beanRepository and _beans list since we delegate to BeanListScreen
-
+class _BrewResultScreenState extends ConsumerState<BrewResultScreen> {
   late TextEditingController _noteController;
   Bean? _selectedBean;
 
@@ -33,12 +33,20 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
     _selectedBean = widget.result.bean;
   }
 
-  // Removed _loadBeans and _showAddBeanDialog
-
   @override
   void dispose() {
     _noteController.dispose();
     super.dispose();
+  }
+
+  /// 現在の入力状態を反映したBrewResultを作成し、DBを更新します
+  Future<BrewResult> _updateAndSave() async {
+    final updatedResult = widget.result.copyWith(
+      bean: _selectedBean,
+      notes: _noteController.text,
+    );
+    await ref.read(brewResultRepositoryProvider).addResult(updatedResult);
+    return updatedResult;
   }
 
   @override
@@ -92,6 +100,8 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
                   setState(() {
                     _selectedBean = selected;
                   });
+                  // Auto-save on selection? Or just wait for explicit action/exit.
+                  // Let's optimize by not saving on every selection but relying on exit/actions.
                 }
               },
               child: InputDecorator(
@@ -203,18 +213,16 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // Create updated result
-                  final updatedResult = widget.result.copyWith(
-                    bean: _selectedBean,
-                    notes: _noteController.text,
-                  );
+                onPressed: () async {
+                  final updatedResult = await _updateAndSave();
 
                   final md = updatedResult.toMarkdown();
                   Clipboard.setData(ClipboardData(text: md));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Copied to Clipboard!')),
-                  );
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Copied to Clipboard!')),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.copy),
                 label: const Text('Copy as Markdown'),
@@ -226,10 +234,7 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
               height: 50,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  final updatedResult = widget.result.copyWith(
-                    bean: _selectedBean,
-                    notes: _noteController.text,
-                  );
+                  final updatedResult = await _updateAndSave();
                   final md = updatedResult.toMarkdown();
 
                   // Filename: yyyyMMdd_HHmm_BeanName
@@ -264,9 +269,12 @@ class _BrewResultScreenState extends State<BrewResultScreen> {
             const SizedBox(height: 32),
             Center(
               child: TextButton(
-                onPressed: () {
-                  // Navigate back to list (pop until first)
-                  Navigator.popUntil(context, (route) => route.isFirst);
+                onPressed: () async {
+                  await _updateAndSave();
+                  if (context.mounted) {
+                    // Navigate back to list (pop until first)
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                  }
                 },
                 child: const Text('Back to Home'),
               ),

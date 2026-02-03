@@ -23,6 +23,22 @@ class BrewResultStep {
     required this.actualTime,
     required this.waterAmount,
   });
+
+  Map<String, dynamic> toJson() => {
+        'stepIndex': stepIndex,
+        'plannedTime': plannedTime.inMilliseconds,
+        'actualTime': actualTime.inMilliseconds,
+        'waterAmount': waterAmount,
+      };
+
+  factory BrewResultStep.fromJson(Map<String, dynamic> json) {
+    return BrewResultStep(
+      stepIndex: json['stepIndex'] as int,
+      plannedTime: Duration(milliseconds: json['plannedTime'] as int),
+      actualTime: Duration(milliseconds: json['actualTime'] as int),
+      waterAmount: (json['waterAmount'] as num).toDouble(),
+    );
+  }
 }
 
 /// ドリップ全体の実行結果
@@ -77,6 +93,32 @@ class BrewResult {
       steps: steps ?? this.steps,
       totalTime: totalTime ?? this.totalTime,
       notes: notes ?? this.notes,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'recipe': recipe.toJson(),
+        'bean': bean?.toJson(),
+        'brewedAt': brewedAt.toIso8601String(),
+        'steps': steps.map((s) => s.toJson()).toList(),
+        'totalTime': totalTime.inMilliseconds,
+        'notes': notes,
+      };
+
+  factory BrewResult.fromJson(Map<String, dynamic> json) {
+    return BrewResult(
+      id: json['id'] as String,
+      recipe: Recipe.fromJson(json['recipe'] as Map<String, dynamic>),
+      bean: json['bean'] != null
+          ? Bean.fromJson(json['bean'] as Map<String, dynamic>)
+          : null,
+      brewedAt: DateTime.parse(json['brewedAt'] as String),
+      steps: (json['steps'] as List)
+          .map((e) => BrewResultStep.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      totalTime: Duration(milliseconds: json['totalTime'] as int),
+      notes: json['notes'] as String? ?? '',
     );
   }
 
