@@ -1,29 +1,37 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
 import '../models/brew_step.dart';
+import '../utils/recipe_sharer.dart';
 import 'brewing_screen.dart';
+import 'recipe_edit_screen.dart';
+import '../repositories/recipe_repository.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 /// 抽出前調整画面
 ///
 /// レシピを元に、その時の状況（豆の量や味の好み）に合わせて一時的にパラメータを変更します。
-class PreBrewAdjustmentScreen extends StatefulWidget {
+class PreBrewAdjustmentScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
 
   const PreBrewAdjustmentScreen({super.key, required this.recipe});
 
   @override
-  State<PreBrewAdjustmentScreen> createState() =>
+  ConsumerState<PreBrewAdjustmentScreen> createState() =>
       _PreBrewAdjustmentScreenState();
 }
 
-class _PreBrewAdjustmentScreenState extends State<PreBrewAdjustmentScreen> {
+class _PreBrewAdjustmentScreenState
+    extends ConsumerState<PreBrewAdjustmentScreen> {
   final _formKey = GlobalKey<FormState>();
-  late Recipe _tempRecipe;
+  late Recipe _baseRecipe; // 編集・共有用の大元のレシピ
+  late Recipe _tempRecipe; // 調整用のレシピ
   bool _maintainRatio = true;
 
   @override
   void initState() {
     super.initState();
+    _baseRecipe = widget.recipe;
     // 編集用にコピーを作成
     _tempRecipe = widget.recipe;
   }
@@ -55,6 +63,18 @@ class _PreBrewAdjustmentScreenState extends State<PreBrewAdjustmentScreen> {
     });
   }
 
+  void _updateStepWaitTime(int index, int newSeconds) {
+    final newSteps = List<BrewStep>.from(_tempRecipe.steps);
+    newSteps[index] = BrewStep(
+      waterAmount: newSteps[index].waterAmount,
+      waitTime: Duration(seconds: newSeconds),
+    );
+
+    setState(() {
+      _tempRecipe = _tempRecipe.copyWith(steps: newSteps);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final ratio = _tempRecipe.beanWeightGrams > 0
@@ -64,6 +84,42 @@ class _PreBrewAdjustmentScreenState extends State<PreBrewAdjustmentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Adjust Recipe'),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              switch (value) {
+                case 'edit':
+                  await _editOriginal();
+                  break;
+                case 'share':
+                  await _shareRecipe();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 20, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text('Edit Original'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: [
+                    Icon(Icons.share, size: 20, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text('Share'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -181,6 +237,35 @@ class _PreBrewAdjustmentScreenState extends State<PreBrewAdjustmentScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              _buildSimpleEditField(
+                label: 'Grinder',
+                initialValue: _tempRecipe.grinder ?? '',
+                onChanged: (val) =>
+                    _tempRecipe = _tempRecipe.copyWith(grinder: val),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSimpleEditField(
+                      label: 'Dripper',
+                      initialValue: _tempRecipe.dripper ?? '',
+                      onChanged: (val) =>
+                          _tempRecipe = _tempRecipe.copyWith(dripper: val),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildSimpleEditField(
+                      label: 'Filter',
+                      initialValue: _tempRecipe.filter ?? '',
+                      onChanged: (val) =>
+                          _tempRecipe = _tempRecipe.copyWith(filter: val),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
 
               // Steps Section
@@ -232,11 +317,36 @@ class _PreBrewAdjustmentScreenState extends State<PreBrewAdjustmentScreen> {
                           ),
                         ],
                       ),
-                      trailing: Text('${step.waitTime.inSeconds}s',
-                          style: const TextStyle(color: Colors.grey)),
+                      trailing: SizedBox(
+                        width: 60,
+                        child: TextFormField(
+                          key: ValueKey(
+                              'step_time_${index}_${step.waitTime.inSeconds}'),
+                          initialValue: step.waitTime.inSeconds.toString(),
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            suffixText: 's',
+                          ),
+                          onChanged: (val) {
+                            final seconds = int.tryParse(val) ?? 0;
+                            _updateStepWaitTime(index, seconds);
+                          },
+                        ),
+                      ),
                     ),
                   );
                 },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Note
+              _buildSimpleEditField(
+                label: 'Note',
+                initialValue: _tempRecipe.note ?? '',
+                onChanged: (val) =>
+                    _tempRecipe = _tempRecipe.copyWith(note: val),
               ),
 
               const SizedBox(height: 40),
@@ -301,5 +411,45 @@ class _PreBrewAdjustmentScreenState extends State<PreBrewAdjustmentScreen> {
       validator: validator,
       onChanged: onChanged,
     );
+  }
+
+  Future<void> _editOriginal() async {
+    final updatedRecipe = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipeEditScreen(recipe: _baseRecipe),
+      ),
+    );
+
+    if (updatedRecipe != null && updatedRecipe is Recipe) {
+      // リポジトリに保存
+      await ref.read(recipeRepositoryProvider).saveRecipe(updatedRecipe);
+
+      setState(() {
+        _baseRecipe = updatedRecipe;
+        // 調整中の内容もリセットして元レシピに合わせる（UXとしてその方が自然）
+        _tempRecipe = updatedRecipe;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Original recipe updated')),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareRecipe() async {
+    // 共有するのは「元レシピ」か「調整後」か？
+    // DetailScreenの代替機能としては「元レシピ」を共有すべき。
+    final code = RecipeSharer.encode(_baseRecipe);
+    if (code.isNotEmpty) {
+      await Clipboard.setData(ClipboardData(text: code));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Recipe copied to clipboard!')),
+        );
+      }
+    }
   }
 }

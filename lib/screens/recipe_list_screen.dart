@@ -9,7 +9,7 @@ import '../utils/recipe_sharer.dart';
 import '../utils/dev_data.dart'; // for generateDummyData
 import 'bean_list_screen.dart';
 import 'recipe_edit_screen.dart';
-import 'recipe_detail_screen.dart';
+import 'pre_brew_adjustment_screen.dart';
 
 /// レシピ一覧画面 (ホーム画面)
 ///
@@ -272,7 +272,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     final updatedRecipe = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => RecipeDetailScreen(recipe: recipe),
+        builder: (context) => PreBrewAdjustmentScreen(recipe: recipe),
       ),
     );
 
