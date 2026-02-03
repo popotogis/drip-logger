@@ -129,4 +129,48 @@ class Recipe {
           : DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
+
+  /// 指定した豆量に合わせて、総湯量と各ステップの湯量をスケーリングした新しいレシピを返します
+  Recipe scaleToBeanWeight(double targetBeanWeight) {
+    if (beanWeightGrams == 0) return this;
+    final ratio = targetBeanWeight / beanWeightGrams;
+    return scaleByRatio(ratio, targetBeanWeight);
+  }
+
+  /// 指定した比率でスケーリングします
+  Recipe scaleByRatio(double ratio, [double? newBeanWeight]) {
+    final scaledSteps = steps.map((s) => s.scale(ratio)).toList();
+    // 総湯量はステップの合計から再計算して整合性を保つ
+    final scaledTotalWater =
+        (scaledSteps.fold(0.0, (sum, s) => sum + s.waterAmount) * 10)
+                .roundToDouble() /
+            10;
+
+    return copyWith(
+      beanWeightGrams: newBeanWeight ??
+          ((beanWeightGrams * ratio * 10).roundToDouble() / 10),
+      totalWaterAmount: scaledTotalWater,
+      steps: scaledSteps,
+    );
+  }
+
+  /// 指定したレシピと「中身（パラメータ）」が異なるか判定します
+  bool isContentDifferent(Recipe other) {
+    if (beanWeightGrams != other.beanWeightGrams) return true;
+    if (totalWaterAmount != other.totalWaterAmount) return true;
+    if (grindSize != other.grindSize) return true;
+    if (grinder != other.grinder) return true;
+    if (dripper != other.dripper) return true;
+    if (filter != other.filter) return true;
+    if (temperature != other.temperature) return true;
+    if (note != other.note) return true;
+    if (steps.length != other.steps.length) return true;
+
+    for (int i = 0; i < steps.length; i++) {
+      if (steps[i].waterAmount != other.steps[i].waterAmount) return true;
+      if (steps[i].waitTime != other.steps[i].waitTime) return true;
+    }
+
+    return false;
+  }
 }

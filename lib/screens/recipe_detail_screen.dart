@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/recipe.dart';
 import '../utils/recipe_sharer.dart';
 import 'recipe_edit_screen.dart';
-import 'brewing_screen.dart';
+import 'pre_brew_adjustment_screen.dart';
 
 /// レシピ詳細画面
 ///
@@ -204,7 +204,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BrewingScreen(recipe: _recipe),
+                        builder: (context) =>
+                            PreBrewAdjustmentScreen(recipe: _recipe),
                       ),
                     );
                   },

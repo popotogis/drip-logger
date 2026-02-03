@@ -73,6 +73,13 @@ class RecipeRepository {
     await _store.record(id).delete(db);
   }
 
+  /// 特定のレシピを取得します
+  Future<Recipe?> getRecipe(String id) async {
+    final db = await _db;
+    final snapshot = await _store.record(id).getSnapshot(db);
+    return snapshot != null ? Recipe.fromJson(snapshot.value) : null;
+  }
+
   /// 特定のレシピの使用日時を更新し、リストの先頭に来るようにします
   Future<void> updateLastUsed(String recipeId) async {
     final db = await _db;

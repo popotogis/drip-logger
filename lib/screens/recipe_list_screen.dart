@@ -276,9 +276,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
       ),
     );
 
+    // 抽出フローから戻った場合や編集された場合など、常にリロードして最新のLastUsed順序を反映する
     if (updatedRecipe != null && updatedRecipe is Recipe) {
       await ref.read(recipeRepositoryProvider).saveRecipe(updatedRecipe);
-      await _loadRecipes();
     }
+    await _loadRecipes();
   }
 }

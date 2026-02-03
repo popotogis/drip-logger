@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/brew_result.dart';
 import '../models/bean.dart';
 import '../repositories/brew_result_repository.dart';
+import '../repositories/recipe_repository.dart';
 import 'bean_list_screen.dart';
 
 /// 抽出結果画面
@@ -25,12 +26,33 @@ class BrewResultScreen extends ConsumerStatefulWidget {
 class _BrewResultScreenState extends ConsumerState<BrewResultScreen> {
   late TextEditingController _noteController;
   Bean? _selectedBean;
+  bool _isModified = false;
 
   @override
   void initState() {
     super.initState();
     _noteController = TextEditingController(text: widget.result.notes);
     _selectedBean = widget.result.bean;
+    _checkModification();
+  }
+
+  Future<void> _checkModification() async {
+    final original = await ref
+        .read(recipeRepositoryProvider)
+        .getRecipe(widget.result.recipe.id);
+    if (original != null) {
+      if (mounted) {
+        setState(() {
+          _isModified = widget.result.recipe.isContentDifferent(original);
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isModified = true;
+        });
+      }
+    }
   }
 
   @override
@@ -207,6 +229,66 @@ class _BrewResultScreenState extends ConsumerState<BrewResultScreen> {
               ),
             ),
             const SizedBox(height: 32),
+
+            // --- 新規レシピとして保存の提案 ---
+            if (_isModified)
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final nameController = TextEditingController(
+                        text: '${result.recipe.name} (Adjusted)');
+                    final newName = await showDialog<String>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Save as New Recipe'),
+                        content: TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Recipe Name',
+                            hintText: 'Enter new recipe name',
+                          ),
+                          autofocus: true,
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.pop(context, nameController.text),
+                            child: const Text('Save'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (newName != null && newName.isNotEmpty) {
+                      final newRecipe = result.recipe.copyWith(
+                        id: DateTime.now().toString(),
+                        name: newName,
+                        lastUsed: DateTime.now(),
+                      );
+                      await ref
+                          .read(recipeRepositoryProvider)
+                          .saveRecipe(newRecipe);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Saved as new recipe!')),
+                        );
+                        setState(() {
+                          _isModified = false;
+                        });
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.bookmark_add_outlined),
+                  label: const Text('Save as New Recipe'),
+                ),
+              ),
+            if (_isModified) const SizedBox(height: 16),
 
             // Actions
             SizedBox(

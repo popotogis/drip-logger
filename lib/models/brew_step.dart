@@ -24,4 +24,14 @@ class BrewStep {
       waitTime: Duration(seconds: json['waitTime'] as int),
     );
   }
+
+  /// 指定した比率で湯量をスケーリングした新しいステップを返します
+  BrewStep scale(double ratio) {
+    // 浮動小数点の誤差を防ぐため、1桁目で丸める
+    final scaledWater = (waterAmount * ratio * 10).roundToDouble() / 10;
+    return BrewStep(
+      waterAmount: scaledWater,
+      waitTime: waitTime,
+    );
+  }
 }
