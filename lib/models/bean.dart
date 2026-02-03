@@ -41,6 +41,30 @@ class Bean {
     DateTime? lastUsed,
   }) : lastUsed = lastUsed ?? DateTime.now();
 
+  Bean copyWith({
+    String? id,
+    String? name,
+    String? roaster,
+    String? roastLevel,
+    String? origin,
+    String? process,
+    String? variety,
+    DateTime? roastDate,
+    DateTime? lastUsed,
+  }) {
+    return Bean(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      roaster: roaster ?? this.roaster,
+      roastLevel: roastLevel ?? this.roastLevel,
+      origin: origin ?? this.origin,
+      process: process ?? this.process,
+      variety: variety ?? this.variety,
+      roastDate: roastDate ?? this.roastDate,
+      lastUsed: lastUsed ?? this.lastUsed,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,

@@ -1,69 +1,111 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/recipe.dart';
-import '../models/brew_step.dart';
+import 'package:sembast/sembast.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/recipe.dart';
+import '../models/brew_step.dart';
+import '../services/database_service.dart';
 
 /// レシピ情報の永続化を担当するリポジトリ
 ///
-/// SharedPreferenceを使用して、JSON形式でローカルにデータを保存します。
+/// Sembastを使用して、ローカルDBにデータを保存します。
+/// 起動時にSharedPreferenceからのデータ移行も行います。
 class RecipeRepository {
-  static const String _keyRecipes = 'recipes';
+  final DatabaseService _databaseService;
+  static const String _storeName = 'recipes';
+  static const String _keyRecipesSharedPrefs = 'recipes';
+  static const String _keyMigrated = 'migrated_recipes_to_sembast';
+
+  final _store = stringMapStoreFactory.store(_storeName);
+
+  RecipeRepository(this._databaseService);
+
+  Future<Database> get _db => _databaseService.database;
 
   /// 保存されたレシピリストを読み込みます
   ///
-  /// データがない場合はデフォルトデータを返します。
   /// [lastUsed] の降順（新しい順）でソートして返却します。
+  /// 初回ロード時にデータ移行を試みます。
   Future<List<Recipe>> loadRecipes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? jsonString = prefs.getString(_keyRecipes);
+    // データ移行の確認と実行
+    await migrateFromSharedPreferences();
 
+    final db = await _db;
+    final finder = Finder(sortOrders: [SortOrder('lastUsed', false)]);
+    final snapshots = await _store.find(db, finder: finder);
+
+    if (snapshots.isEmpty) {
+      // 初期データ生成（DBが空の場合のみ）
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool(_keyMigrated) == true) {
+        return [];
+      } else {
+        return _generateDefaultRecipes();
+      }
+    }
+
+    return snapshots.map((snapshot) {
+      return Recipe.fromJson(snapshot.value);
+    }).toList();
+  }
+
+  /// レシピを保存（新規追加・更新）します
+  Future<void> saveRecipe(Recipe recipe) async {
+    final db = await _db;
+    await _store.record(recipe.id).put(db, recipe.toJson());
+  }
+
+  /// 特定のレシピを削除します
+  Future<void> deleteRecipe(String id) async {
+    final db = await _db;
+    await _store.record(id).delete(db);
+  }
+
+  /// 特定のレシピの使用日時を更新し、リストの先頭に来るようにします
+  Future<void> updateLastUsed(String recipeId) async {
+    final db = await _db;
+    final record = _store.record(recipeId);
+    final snapshot = await record.getSnapshot(db);
+
+    if (snapshot != null) {
+      final recipe = Recipe.fromJson(snapshot.value);
+      final updated = recipe.copyWith(lastUsed: DateTime.now());
+      await record.put(db, updated.toJson());
+    }
+  }
+
+  /// SharedPreferencesからデータを移行します
+  Future<void> migrateFromSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (prefs.getBool(_keyMigrated) == true) {
+      return;
+    }
+
+    final String? jsonString = prefs.getString(_keyRecipesSharedPrefs);
     if (jsonString == null) {
-      // Return default data if storage is empty
-      return _generateDefaultRecipes();
+      await prefs.setBool(_keyMigrated, true);
+      return;
     }
 
     try {
       final List<dynamic> jsonList = jsonDecode(jsonString);
       final recipes = jsonList.map((json) => Recipe.fromJson(json)).toList();
-      recipes.sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
-      return recipes;
+
+      if (recipes.isNotEmpty) {
+        final db = await _db;
+        await db.transaction((txn) async {
+          for (var recipe in recipes) {
+            await _store.record(recipe.id).put(txn, recipe.toJson());
+          }
+        });
+      }
+
+      await prefs.setBool(_keyMigrated, true);
+      debugPrint('Migrated ${recipes.length} recipes from SharedPreferences.');
     } catch (e) {
-      // If error (e.g. format change), return defaults or empty
-      debugPrint('Error loading recipes: $e');
-      return _generateDefaultRecipes();
-    }
-  }
-
-  /// レシピリストを保存します
-  Future<void> saveRecipes(List<Recipe> recipes) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String jsonString =
-        jsonEncode(recipes.map((r) => r.toJson()).toList());
-    await prefs.setString(_keyRecipes, jsonString);
-  }
-
-  /// 特定のレシピの使用日時を更新し、リストの先頭に来るようにします
-  Future<void> updateLastUsed(String recipeId) async {
-    final recipes = await loadRecipes();
-    final index = recipes.indexWhere((r) => r.id == recipeId);
-    if (index != -1) {
-      final old = recipes[index];
-      final updated = Recipe(
-          id: old.id,
-          name: old.name,
-          beanWeightGrams: old.beanWeightGrams,
-          grindSize: old.grindSize,
-          temperature: old.temperature,
-          totalWaterAmount: old.totalWaterAmount,
-          note: old.note,
-          steps: old.steps,
-          lastUsed: DateTime.now());
-
-      recipes.removeAt(index);
-      recipes.insert(0, updated);
-      await saveRecipes(recipes);
+      debugPrint('Error migrating recipes: $e');
     }
   }
 
@@ -108,5 +150,6 @@ class RecipeRepository {
 }
 
 final recipeRepositoryProvider = Provider<RecipeRepository>((ref) {
-  return RecipeRepository();
+  final dbService = ref.watch(databaseServiceProvider);
+  return RecipeRepository(dbService);
 });

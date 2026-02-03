@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/bean.dart';
 import '../repositories/bean_repository.dart';
@@ -7,7 +8,7 @@ import '../repositories/bean_repository.dart';
 ///
 /// 保存されているコーヒー豆のリスト表示、追加、編集、削除を行います。
 /// [isSelectionMode] が true の場合は、抽出結果に紐づける豆を選択するモードとして動作します。
-class BeanListScreen extends StatefulWidget {
+class BeanListScreen extends ConsumerStatefulWidget {
   final bool isSelectionMode;
 
   const BeanListScreen({
@@ -16,11 +17,10 @@ class BeanListScreen extends StatefulWidget {
   });
 
   @override
-  State<BeanListScreen> createState() => _BeanListScreenState();
+  ConsumerState<BeanListScreen> createState() => _BeanListScreenState();
 }
 
-class _BeanListScreenState extends State<BeanListScreen> {
-  final BeanRepository _repository = BeanRepository();
+class _BeanListScreenState extends ConsumerState<BeanListScreen> {
   List<Bean> _beans = [];
   bool _isLoading = true;
 
@@ -31,17 +31,14 @@ class _BeanListScreenState extends State<BeanListScreen> {
   }
 
   Future<void> _loadBeans() async {
-    final beans = await _repository.loadBeans();
+    final repository = ref.read(beanRepositoryProvider);
+    final beans = await repository.loadBeans();
     if (mounted) {
       setState(() {
         _beans = beans;
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> _saveBeans() async {
-    await _repository.saveBeans(_beans);
   }
 
   void _showBeanInputCallback({Bean? bean}) {
@@ -156,19 +153,8 @@ class _BeanListScreenState extends State<BeanListScreen> {
                 lastUsed: bean?.lastUsed,
               );
 
-              if (bean == null) {
-                // Add
-                _beans.add(newBean);
-              } else {
-                // Edit
-                final index = _beans.indexWhere((b) => b.id == bean.id);
-                if (index != -1) {
-                  _beans[index] = newBean;
-                }
-              }
-
-              await _saveBeans();
-              // Reload to ensure sort (though for add/edit we might not need re-sort immediately, but let's be consistent)
+              final repository = ref.read(beanRepositoryProvider);
+              await repository.saveBean(newBean);
               await _loadBeans();
 
               if (context.mounted) Navigator.pop(context);
@@ -218,10 +204,13 @@ class _BeanListScreenState extends State<BeanListScreen> {
                       SlidableAction(
                         onPressed: (context) async {
                           final deletedName = bean.name;
+                          // Optimistic update
                           setState(() {
                             _beans.removeAt(index);
                           });
-                          await _saveBeans();
+                          await ref
+                              .read(beanRepositoryProvider)
+                              .deleteBean(bean.id);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('$deletedName deleted')),
@@ -256,7 +245,9 @@ class _BeanListScreenState extends State<BeanListScreen> {
                     onTap: () async {
                       if (widget.isSelectionMode) {
                         // Update last used
-                        await _repository.updateLastUsed(bean.id);
+                        await ref
+                            .read(beanRepositoryProvider)
+                            .updateLastUsed(bean.id);
                         if (context.mounted) {
                           Navigator.pop(context, bean);
                         }

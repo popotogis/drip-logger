@@ -66,7 +66,7 @@ class _BrewingScreenState extends ConsumerState<BrewingScreen> {
 
   void _startBrewing() {
     _brewStartTime = DateTime.now();
-    RecipeRepository().updateLastUsed(widget.recipe.id);
+    ref.read(recipeRepositoryProvider).updateLastUsed(widget.recipe.id);
     _startTimer();
   }
 

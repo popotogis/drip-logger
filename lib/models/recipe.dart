@@ -64,6 +64,36 @@ class Recipe {
     DateTime? lastUsed,
   }) : lastUsed = lastUsed ?? DateTime.now();
 
+  Recipe copyWith({
+    String? id,
+    String? name,
+    double? beanWeightGrams,
+    String? grinder,
+    String? grindSize,
+    String? dripper,
+    String? filter,
+    double? temperature,
+    double? totalWaterAmount,
+    String? note,
+    List<BrewStep>? steps,
+    DateTime? lastUsed,
+  }) {
+    return Recipe(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      beanWeightGrams: beanWeightGrams ?? this.beanWeightGrams,
+      grinder: grinder ?? this.grinder,
+      grindSize: grindSize ?? this.grindSize,
+      dripper: dripper ?? this.dripper,
+      filter: filter ?? this.filter,
+      temperature: temperature ?? this.temperature,
+      totalWaterAmount: totalWaterAmount ?? this.totalWaterAmount,
+      note: note ?? this.note,
+      steps: steps ?? this.steps,
+      lastUsed: lastUsed ?? this.lastUsed,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // for kDebugMode
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import '../models/recipe.dart';
 import '../repositories/recipe_repository.dart';
 import '../utils/recipe_sharer.dart';
+import '../utils/dev_data.dart'; // for generateDummyData
 import 'bean_list_screen.dart';
 import 'recipe_edit_screen.dart';
 import 'recipe_detail_screen.dart';
@@ -38,11 +40,6 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> _saveRecipes() async {
-    final repository = ref.read(recipeRepositoryProvider);
-    await repository.saveRecipes(_recipes);
   }
 
   // レシピimport用
@@ -83,14 +80,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         );
 
         if (savedRecipe != null) {
-          // Add or Update locally
-          final index = _recipes.indexWhere((r) => r.id == savedRecipe.id);
-          if (index != -1) {
-            _recipes[index] = savedRecipe;
-          } else {
-            _recipes.add(savedRecipe);
-          }
-          await _saveRecipes();
+          await ref.read(recipeRepositoryProvider).saveRecipe(savedRecipe);
           await _loadRecipes();
         }
       }
@@ -138,6 +128,48 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                 },
                 tooltip: 'Manage Beans',
               ),
+              if (kDebugMode)
+                PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'reset') {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Dev: Reset Data'),
+                          content: const Text(
+                              'ALL DATA WILL BE DELETED and replaced with dummy data.'),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel')),
+                            FilledButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('EXECUTE')),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Processing...')));
+                        }
+                        await generateDummyData(ref);
+                        await _loadRecipes();
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Done!')));
+                        }
+                      }
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'reset',
+                      child: Text('Dev: Reset & Seed'),
+                    ),
+                  ],
+                ),
             ],
           ),
           SliverList(
@@ -153,15 +185,21 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                         extentRatio: 0.2,
                         children: [
                           SlidableAction(
-                            onPressed: (context) {
+                            onPressed: (context) async {
+                              final deletedName = recipe.name;
+                              // Optimistic update
                               setState(() {
                                 _recipes.removeAt(index);
                               });
-                              _saveRecipes(); // Delete persistence
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text('${recipe.name} deleted')),
-                              );
+                              await ref
+                                  .read(recipeRepositoryProvider)
+                                  .deleteRecipe(recipe.id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text('$deletedName deleted')),
+                                );
+                              }
                             },
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
@@ -225,12 +263,9 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     );
 
     if (newRecipe != null && newRecipe is Recipe) {
-      // Add and Save locally first
-      _recipes.add(newRecipe);
-      await _saveRecipes();
+      await ref.read(recipeRepositoryProvider).saveRecipe(newRecipe);
+      await _loadRecipes();
     }
-    // Always reload to ensure sorting (newly added should be top)
-    await _loadRecipes();
   }
 
   Future<void> _navigateToDetail(Recipe recipe, int index) async {
@@ -242,16 +277,8 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     );
 
     if (updatedRecipe != null && updatedRecipe is Recipe) {
-      if (updatedRecipe.id == recipe.id) {
-        // ID unchanged: Overwrite (Edit)
-        _recipes[index] = updatedRecipe;
-      } else {
-        // ID changed: Add New (Save as New)
-        _recipes.add(updatedRecipe);
-      }
-      await _saveRecipes();
+      await ref.read(recipeRepositoryProvider).saveRecipe(updatedRecipe);
+      await _loadRecipes();
     }
-    // Always reload to catch "Last Used" updates from Brewing or just sorting changes
-    await _loadRecipes();
   }
 }
