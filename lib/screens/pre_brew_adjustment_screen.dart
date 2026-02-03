@@ -358,7 +358,7 @@ class _PreBrewAdjustmentScreenState
                 child: FilledButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
