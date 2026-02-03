@@ -40,12 +40,14 @@ void main() {
 
       final md = result.toMarkdown();
 
-      expect(md, contains('# Brew Result: My V60'));
-      expect(md, contains('Date: 2023-10-01 15:30'));
-      expect(md, contains('Total Time: 02:45'));
-      expect(md, contains('Name: Kenya AA'));
+      expect(md, contains('# My V60'));
+      expect(md, contains('**抽出日**: 2023/10/01'));
+      expect(md, contains('**合計時間**: 2:45'));
+      expect(md, contains('**名称**: Kenya AA'));
       expect(md, contains('Great acidity'));
-      expect(md, contains('| 1 | 40.0ml | 30s | 00:32 |'));
+      // | Step | x ml | plan s | actual s | diff |
+      // Format: | 1 | 40.0ml | 30s | 32s | +2s |
+      expect(md, contains('| 1 | 40.0ml | 30s | 32s | +2s |'));
     });
   });
 }

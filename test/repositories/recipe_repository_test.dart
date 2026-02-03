@@ -10,10 +10,13 @@ void main() {
   late DatabaseService databaseService;
 
   group('recipeRepository Tests', () {
-    setUp(() {
+    setUp(() async {
       SharedPreferences.setMockInitialValues({});
       // Use in-memory database for testing
       databaseService = DatabaseService(factory: databaseFactoryMemory);
+      // Ensure clean state by deleting the DB from memory
+      await databaseFactoryMemory.deleteDatabase('drip_logger.db');
+
       repository = RecipeRepository(databaseService);
     });
 

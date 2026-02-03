@@ -39,9 +39,20 @@ class RecipeRepository {
       // 初期データ生成（DBが空の場合のみ）
       final prefs = await SharedPreferences.getInstance();
       if (prefs.getBool(_keyMigrated) == true) {
+        // 移行済みフラグがあるのにDBが空 -> ユーザーが全削除したとみなす
         return [];
       } else {
-        return _generateDefaultRecipes();
+        // 初回起動（フラグなし かつ DB空） -> 初期データを投入
+        final defaults = _generateDefaultRecipes();
+        // 初期データを永続化（次回以降のために）
+        await db.transaction((txn) async {
+          for (var recipe in defaults) {
+            await _store.record(recipe.id).put(txn, recipe.toJson());
+          }
+        });
+        // 初期化済みとしてフラグを立てる
+        await prefs.setBool(_keyMigrated, true);
+        return defaults;
       }
     }
 
@@ -85,7 +96,7 @@ class RecipeRepository {
 
     final String? jsonString = prefs.getString(_keyRecipesSharedPrefs);
     if (jsonString == null) {
-      await prefs.setBool(_keyMigrated, true);
+      // 旧データがない場合は何もしない（loadRecipesで初期データを生成させるため、フラグも立てない）
       return;
     }
 
@@ -106,6 +117,10 @@ class RecipeRepository {
       debugPrint('Migrated ${recipes.length} recipes from SharedPreferences.');
     } catch (e) {
       debugPrint('Error migrating recipes: $e');
+      // エラー時もフラグは立てない（再試行可能にするため）
+      // ただし、壊れたデータが残り続けると永遠に起動しないリスクもあるが、
+      // ここでは安全側に倒してデフォルト生成へフォールバックさせる手もある。
+      // 現状は再試行。
     }
   }
 

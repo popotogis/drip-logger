@@ -35,19 +35,21 @@ class BeanRepository {
     final snapshots = await _store.find(db, finder: finder);
 
     if (snapshots.isEmpty) {
-      // 初期データ生成（DBが空の場合のみ）
-      // ただし、マイグレーション後で空ならそれは「ユーザーが全て削除した」か「初期状態」か区別がつかないが、
-      // ここでは簡易的に「真に空なら初期データ」とする。
-      // SharedPreferencesからの移行済みフラグがあれば初期データを作らない、という制御も考えられるが、
-      // まずはシンプルに「空ならデフォルト」とする（ユーザーが全部消したらまたデフォルトが出る挙動になるが許容範囲か）
-      // -> いや、ユーザーが消した後に復活するのはウザいので、
-      // "Migrated"フラグがある、かつ空なら「空のリスト」を返すべき。
-      // "Migrated"フラグがない（初回起動）かつ空なら「デフォルト」を返す。
       final prefs = await SharedPreferences.getInstance();
       if (prefs.getBool(_keyMigrated) == true) {
         return [];
       } else {
-        return _generateDefaultBeans();
+        // 初回起動（フラグなし かつ DB空） -> 初期データを投入
+        final defaults = _generateDefaultBeans();
+        // 初期データを永続化
+        await db.transaction((txn) async {
+          for (var bean in defaults) {
+            await _store.record(bean.id).put(txn, bean.toJson());
+          }
+        });
+        // 初期化済みとしてフラグを立てる
+        await prefs.setBool(_keyMigrated, true);
+        return defaults;
       }
     }
 
@@ -92,8 +94,7 @@ class BeanRepository {
 
     final String? jsonString = prefs.getString(_keyBeansSharedPrefs);
     if (jsonString == null) {
-      // データがない場合も移行済みとしてマーク（次回以降チェックしないため）
-      await prefs.setBool(_keyMigrated, true);
+      // データがない場合も移行済みとしてマークしない（loadBeansで初期データを入れるため）
       return;
     }
 
