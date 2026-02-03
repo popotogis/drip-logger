@@ -26,6 +26,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
   late String _dripper;
   late String _filter;
   late double _totalWaterAmount;
+  double? _temperature;
   late String _note;
 
   // 抽出ステップのリスト
@@ -43,6 +44,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
       _dripper = r.dripper ?? '';
       _filter = r.filter ?? '';
       _totalWaterAmount = r.totalWaterAmount;
+      _temperature = r.temperature;
       _note = r.note ?? '';
       // リストはコピーを作成して、編集中の変更が元データに即座に影響しないようにする
       _steps = List.from(r.steps);
@@ -54,6 +56,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
       _dripper = '';
       _filter = '';
       _totalWaterAmount = 0;
+      _temperature = null;
       _note = '';
       _steps = [];
     }
@@ -124,6 +127,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
       grindSize: _grindSize,
       dripper: _dripper.isEmpty ? null : _dripper,
       filter: _filter.isEmpty ? null : _filter,
+      temperature: _temperature,
       totalWaterAmount: _totalWaterAmount,
       note: _note,
       steps: _steps,
@@ -220,17 +224,6 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                   onSaved: (value) => _grindSize = value ?? '',
                 ),
                 TextFormField(
-                  initialValue: _dripper,
-                  decoration:
-                      const InputDecoration(labelText: 'Dripper (e.g. V60)'),
-                  onSaved: (value) => _dripper = value ?? '',
-                ),
-                TextFormField(
-                  initialValue: _filter,
-                  decoration: const InputDecoration(labelText: 'Filter'),
-                  onSaved: (value) => _filter = value ?? '',
-                ),
-                TextFormField(
                   initialValue:
                       _totalWaterAmount > 0 ? _totalWaterAmount.toString() : '',
                   decoration:
@@ -240,6 +233,25 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                       (value == null || value.isEmpty) ? 'Required' : null,
                   onSaved: (value) =>
                       _totalWaterAmount = double.tryParse(value ?? '') ?? 0,
+                ),
+                TextFormField(
+                  initialValue: _temperature?.toString() ?? '',
+                  decoration:
+                      const InputDecoration(labelText: 'Temperature (°C)'),
+                  keyboardType: TextInputType.number,
+                  onSaved: (value) =>
+                      _temperature = double.tryParse(value ?? ''),
+                ),
+                TextFormField(
+                  initialValue: _dripper,
+                  decoration:
+                      const InputDecoration(labelText: 'Dripper (e.g. V60)'),
+                  onSaved: (value) => _dripper = value ?? '',
+                ),
+                TextFormField(
+                  initialValue: _filter,
+                  decoration: const InputDecoration(labelText: 'Filter'),
+                  onSaved: (value) => _filter = value ?? '',
                 ),
                 TextFormField(
                   initialValue: _note,
