@@ -1,184 +1,94 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-// for FontFeature
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/recipe.dart';
-import '../models/brew_result.dart';
-import 'brew_result_screen.dart';
 
-import '../repositories/recipe_repository.dart';
-import '../repositories/brew_result_repository.dart';
+import '../models/recipe.dart';
+import 'brew_result_screen.dart';
+import '../viewmodels/brewing_viewmodel.dart';
+import '../widgets/brewing/brew_progress_timeline.dart';
+import '../widgets/brewing/brew_timer_display.dart';
 
 /// 抽出実行画面
 ///
 /// タイマーとガイドを表示しながら、実際のドリップを行います。
 /// ステップごとの実績時間を記録し、終了後に結果画面へ遷移します。
-class BrewingScreen extends ConsumerStatefulWidget {
+class BrewingScreen extends ConsumerWidget {
   final Recipe recipe;
 
   const BrewingScreen({super.key, required this.recipe});
 
   @override
-  ConsumerState<BrewingScreen> createState() => _BrewingScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = brewingViewModelProvider(recipe);
+    final state = ref.watch(provider);
+    final viewModel = ref.read(provider.notifier);
 
-class _BrewingScreenState extends ConsumerState<BrewingScreen> {
-  // Timer State
-  Timer? _timer;
-  final Stopwatch _stopwatch = Stopwatch();
-
-  // Recording State
-  final List<BrewResultStep> _resultSteps = [];
-  DateTime? _brewStartTime;
-  Duration _lastSplitTime = Duration.zero;
-
-  // Step State
-  int _currentStepIndex = 0;
-
-  double get _currentStepTargetWater {
-    double total = 0;
-    for (int i = 0; i <= _currentStepIndex; i++) {
-      total += widget.recipe.steps[i].waterAmount;
-    }
-    return total;
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _stopwatch.stop();
-    super.dispose();
-  }
-
-  void _onMainActionButtonPressed() {
-    if (!_stopwatch.isRunning && _elapsed.inMilliseconds == 0) {
-      _startBrewing();
-      return;
-    }
-
-    if (_currentStepIndex >= widget.recipe.steps.length - 1) {
-      _finishBrewing();
-      return;
-    }
-
-    _nextStep();
-  }
-
-  void _startBrewing() {
-    _brewStartTime = DateTime.now();
-    ref.read(recipeRepositoryProvider).updateLastUsed(widget.recipe.id);
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _stopwatch.start();
-    _timer = Timer.periodic(const Duration(milliseconds: 30), (_) {
-      if (mounted) setState(() {});
+    // Navigation Listener
+    ref.listen<BrewingState>(provider, (previous, next) {
+      if (!next.isFinished &&
+          previous?.isFinished == false &&
+          next.result != null) {
+        // Handle finish (edge case where isFinished logic might differ)
+      }
+      if (next.isFinished && next.result != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BrewResultScreen(result: next.result!),
+          ),
+        );
+      }
     });
-    setState(() {});
-  }
 
-  void _stopTimer() {
-    _stopwatch.stop();
-    _timer?.cancel();
-    setState(() {});
-  }
-
-  void _togglePause() {
-    if (_stopwatch.isRunning) {
-      _stopTimer();
-    } else {
-      _startTimer();
-    }
-  }
-
-  Duration get _elapsed => _stopwatch.elapsed;
-
-  void _nextStep() {
-    if (!_stopwatch.isRunning) {
-      _startTimer();
-    }
-
-    final currentElapsed = _stopwatch.elapsed;
-    final stepDuration = currentElapsed - _lastSplitTime;
-
-    _resultSteps.add(BrewResultStep(
-      stepIndex: _currentStepIndex,
-      plannedTime: widget.recipe.steps[_currentStepIndex].waitTime,
-      actualTime: stepDuration,
-      waterAmount: widget.recipe.steps[_currentStepIndex].waterAmount,
-    ));
-
-    _lastSplitTime = currentElapsed;
-
-    setState(() {
-      _currentStepIndex++;
-    });
-  }
-
-  Future<void> _finishBrewing() async {
-    _stopTimer();
-
-    final result = BrewResult(
-      id: DateTime.now().toString(), // Improved ID generation recommended later
-      recipe: widget.recipe,
-      brewedAt: _brewStartTime ?? DateTime.now(),
-      steps: _resultSteps,
-      totalTime: _elapsed,
-    );
-
-    // Save to DB
-    await ref.read(brewResultRepositoryProvider).addResult(result);
-
-    if (!mounted) return;
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BrewResultScreen(result: result),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final stepCount = widget.recipe.steps.length;
+    final stepCount = recipe.steps.length;
     if (stepCount == 0) return const SizedBox();
 
-    final safeIndex =
-        _currentStepIndex >= stepCount ? stepCount - 1 : _currentStepIndex;
-    final currentStep = widget.recipe.steps[safeIndex];
+    final safeIndex = state.currentStepIndex >= stepCount
+        ? stepCount - 1
+        : state.currentStepIndex;
+    final currentStep = recipe.steps[safeIndex];
 
+    // Determine Button State
     String mainButtonLabel;
     Color mainButtonColor;
     Color mainButtonFgColor;
     IconData? mainButtonIcon;
 
-    if (!_stopwatch.isRunning && _elapsed.inMilliseconds == 0) {
+    if (!state.isRunning && state.elapsed.inMilliseconds == 0) {
       mainButtonLabel = 'Start';
       mainButtonColor = Colors.green;
       mainButtonFgColor = Colors.white;
       mainButtonIcon = Icons.play_arrow;
-    } else if (_currentStepIndex >= stepCount - 1) {
+    } else if (state.currentStepIndex >= stepCount - 1) {
       mainButtonLabel = 'Finish';
       mainButtonColor = Colors.orange;
       mainButtonFgColor = Colors.white;
       mainButtonIcon = Icons.check;
     } else {
       mainButtonLabel = 'Next Step';
-      mainButtonColor = Theme.of(context).colorScheme.primary; // Tint Color
+      mainButtonColor = Theme.of(context).colorScheme.primary;
       mainButtonFgColor = Colors.white;
       mainButtonIcon = null;
     }
 
+    // Button Action
+    void onMainButtonPressed() {
+      if (!state.isRunning && state.elapsed.inMilliseconds == 0) {
+        viewModel.startBrewing();
+      } else if (state.currentStepIndex >= stepCount - 1) {
+        viewModel.finishBrewing();
+      } else {
+        viewModel.nextStep();
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.recipe.name),
+        title: Text(recipe.name),
         actions: [
           IconButton(
-            icon: Icon(_stopwatch.isRunning ? Icons.pause : Icons.play_arrow),
-            onPressed: _togglePause,
-            tooltip: _stopwatch.isRunning ? 'Pause' : 'Resume',
+            icon: Icon(state.isRunning ? Icons.pause : Icons.play_arrow),
+            onPressed: viewModel.togglePause,
+            tooltip: state.isRunning ? 'Pause' : 'Resume',
           ),
         ],
       ),
@@ -187,22 +97,14 @@ class _BrewingScreenState extends ConsumerState<BrewingScreen> {
           children: [
             const Spacer(flex: 2),
             // Timer
-            Text(
-              _formatDuration(_elapsed),
-              style: const TextStyle(
-                fontSize: 90,
-                fontWeight: FontWeight.w200, // Thin font
-                letterSpacing: -2.0,
-                fontFeatures: [FontFeature.tabularFigures()],
-              ),
-            ),
+            BrewTimerDisplay(elapsed: state.elapsed),
             const Spacer(flex: 1),
 
             // Main Info
             Column(
               children: [
                 Text(
-                  '${_currentStepTargetWater.toStringAsFixed(0)}ml',
+                  '${state.currentStepTargetWater.toStringAsFixed(0)}ml',
                   style: const TextStyle(
                       fontSize: 48, fontWeight: FontWeight.bold),
                 ),
@@ -229,57 +131,10 @@ class _BrewingScreenState extends ConsumerState<BrewingScreen> {
             // Timeline Progress Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Builder(builder: (context) {
-                final steps = widget.recipe.steps;
-                // Calculate total duration for sanity check, though not strictly needed for Flex
-                final totalDuration =
-                    steps.fold(0, (sum, s) => sum + s.waitTime.inSeconds);
-                if (totalDuration == 0) return const SizedBox();
-
-                final elapsedSeconds = _elapsed.inMilliseconds / 1000.0;
-                double accumulatedTime = 0;
-
-                return Row(
-                  children: steps.asMap().entries.map((entry) {
-                    final step = entry.value;
-                    final stepSeconds = step.waitTime.inSeconds.toDouble();
-
-                    // Avoid zero-width flex issues
-                    final flex = stepSeconds > 0 ? stepSeconds.toInt() : 1;
-
-                    final stepStart = accumulatedTime;
-                    final stepEnd = stepStart + stepSeconds;
-
-                    double value = 0.0;
-                    if (elapsedSeconds >= stepEnd) {
-                      value = 1.0;
-                    } else if (elapsedSeconds <= stepStart) {
-                      value = 0.0;
-                    } else {
-                      value = (elapsedSeconds - stepStart) / stepSeconds;
-                    }
-
-                    accumulatedTime += stepSeconds;
-
-                    return Expanded(
-                      flex: flex,
-                      child: Container(
-                        height: 12, // Thicker for visibility
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: value,
-                            backgroundColor: Colors.grey[400],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Theme.of(context).primaryColor),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                );
-              }),
+              child: BrewProgressTimeline(
+                recipe: recipe,
+                elapsed: state.elapsed,
+              ),
             ),
             const SizedBox(height: 40),
 
@@ -290,7 +145,7 @@ class _BrewingScreenState extends ConsumerState<BrewingScreen> {
                 width: double.infinity,
                 height: 56,
                 child: FilledButton(
-                  onPressed: _onMainActionButtonPressed,
+                  onPressed: onMainButtonPressed,
                   style: FilledButton.styleFrom(
                     backgroundColor: mainButtonColor,
                     foregroundColor: mainButtonFgColor,
@@ -326,13 +181,5 @@ class _BrewingScreenState extends ConsumerState<BrewingScreen> {
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
       ],
     );
-  }
-
-  String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(d.inMinutes.remainder(60));
-    final seconds = twoDigits(d.inSeconds.remainder(60));
-    final milliseconds = (d.inMilliseconds.remainder(1000) ~/ 100).toString();
-    return '$minutes:$seconds.$milliseconds';
   }
 }

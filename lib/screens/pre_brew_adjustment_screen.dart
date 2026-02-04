@@ -1,85 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+
 import '../models/recipe.dart';
-import '../models/brew_step.dart';
 import '../utils/recipe_sharer.dart';
 import 'brewing_screen.dart';
 import 'recipe_edit_screen.dart';
 import '../repositories/recipe_repository.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
+import '../viewmodels/pre_brew_viewmodel.dart';
+import '../widgets/common/recipe_summary_card.dart';
+import '../widgets/pre_brew/bean_weight_section.dart';
+import '../widgets/pre_brew/parameter_edit_section.dart';
+import '../widgets/pre_brew/step_edit_list.dart';
 
 /// 抽出前調整画面
 ///
 /// レシピを元に、その時の状況（豆の量や味の好み）に合わせて一時的にパラメータを変更します。
-class PreBrewAdjustmentScreen extends ConsumerStatefulWidget {
+class PreBrewAdjustmentScreen extends ConsumerWidget {
   final Recipe recipe;
+
+  // Form validation key
+  static final _formKey = GlobalKey<FormState>();
 
   const PreBrewAdjustmentScreen({super.key, required this.recipe});
 
   @override
-  ConsumerState<PreBrewAdjustmentScreen> createState() =>
-      _PreBrewAdjustmentScreenState();
-}
-
-class _PreBrewAdjustmentScreenState
-    extends ConsumerState<PreBrewAdjustmentScreen> {
-  final _formKey = GlobalKey<FormState>();
-  late Recipe _baseRecipe; // 編集・共有用の大元のレシピ
-  late Recipe _tempRecipe; // 調整用のレシピ
-  bool _maintainRatio = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _baseRecipe = widget.recipe;
-    // 編集用にコピーを作成
-    _tempRecipe = widget.recipe;
-  }
-
-  void _updateBeanWeight(double newWeight) {
-    setState(() {
-      if (_maintainRatio) {
-        _tempRecipe = _tempRecipe.scaleToBeanWeight(newWeight);
-      } else {
-        _tempRecipe = _tempRecipe.copyWith(beanWeightGrams: newWeight);
-      }
-    });
-  }
-
-  void _updateStepWater(int index, double newWater) {
-    final newSteps = List<BrewStep>.from(_tempRecipe.steps);
-    newSteps[index] = BrewStep(
-      waterAmount: newWater,
-      waitTime: newSteps[index].waitTime,
-    );
-
-    setState(() {
-      // 総湯量も更新
-      final newTotal = newSteps.fold(0.0, (sum, s) => sum + s.waterAmount);
-      _tempRecipe = _tempRecipe.copyWith(
-        steps: newSteps,
-        totalWaterAmount: newTotal,
-      );
-    });
-  }
-
-  void _updateStepWaitTime(int index, int newSeconds) {
-    final newSteps = List<BrewStep>.from(_tempRecipe.steps);
-    newSteps[index] = BrewStep(
-      waterAmount: newSteps[index].waterAmount,
-      waitTime: Duration(seconds: newSeconds),
-    );
-
-    setState(() {
-      _tempRecipe = _tempRecipe.copyWith(steps: newSteps);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ratio = _tempRecipe.beanWeightGrams > 0
-        ? _tempRecipe.totalWaterAmount / _tempRecipe.beanWeightGrams
-        : 0;
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ViewModel provider (family)
+    final provider = preBrewViewModelProvider(recipe);
+    final state = ref.watch(provider);
+    final viewModel = ref.read(provider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -89,10 +39,10 @@ class _PreBrewAdjustmentScreenState
             onSelected: (value) async {
               switch (value) {
                 case 'edit':
-                  await _editOriginal();
+                  await _editOriginal(context, ref, state.baseRecipe, provider);
                   break;
                 case 'share':
-                  await _shareRecipe();
+                  await _shareRecipe(context, state.baseRecipe);
                   break;
               }
             },
@@ -129,224 +79,55 @@ class _PreBrewAdjustmentScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Summary Header
-              Card(
-                elevation: 4,
-                shadowColor:
-                    Theme.of(context).colorScheme.shadow.withOpacity(0.2),
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildSummaryItem(
-                          'Ratio', '1:${ratio.toStringAsFixed(1)}'),
-                      _buildSummaryItem('Total Water',
-                          '${_tempRecipe.totalWaterAmount.toStringAsFixed(1)}ml'),
-                      _buildSummaryItem('Bean',
-                          '${_tempRecipe.beanWeightGrams.toStringAsFixed(1)}g'),
-                    ],
-                  ),
-                ),
-              ),
+              RecipeSummaryCard(recipe: state.tempRecipe),
               const SizedBox(height: 24),
 
               // Bean Weight Section
-              const Text('BEAN WEIGHT',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      initialValue: _tempRecipe.beanWeightGrams.toString(),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        suffixText: 'g',
-                        border: OutlineInputBorder(),
-                        errorMaxLines: 2,
-                      ),
-                      validator: (val) {
-                        final d = double.tryParse(val ?? '');
-                        if (d == null || d <= 0) return 'Invalid';
-                        if (d > 1000) return 'Too large';
-                        return null;
-                      },
-                      onChanged: (val) {
-                        final weight = double.tryParse(val) ?? 0;
-                        if (weight > 0) _updateBeanWeight(weight);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    children: [
-                      const Text('Scale Steps', style: TextStyle(fontSize: 12)),
-                      Switch(
-                        value: _maintainRatio,
-                        onChanged: (val) =>
-                            setState(() => _maintainRatio = val),
-                      ),
-                    ],
-                  ),
-                ],
+              BeanWeightSection(
+                beanWeight: state.tempRecipe.beanWeightGrams,
+                maintainRatio: state.maintainRatio,
+                onWeightChanged: viewModel.updateBeanWeight,
+                onMaintainRatioChanged: viewModel.setMaintainRatio,
               ),
               const SizedBox(height: 24),
 
               // Other Params
-              const Text('PARAMETERS',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _buildSimpleEditField(
-                      label: 'Grind Size',
-                      initialValue: _tempRecipe.grindSize,
-                      validator: (val) =>
-                          (val == null || val.isEmpty) ? 'Required' : null,
-                      onChanged: (val) =>
-                          _tempRecipe = _tempRecipe.copyWith(grindSize: val),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSimpleEditField(
-                      label: 'Temp (°C)',
-                      initialValue: _tempRecipe.temperature?.toString() ?? '',
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) return null;
-                        final d = double.tryParse(val);
-                        if (d == null || d < 0 || d > 100) return 'Invalid';
-                        return null;
-                      },
-                      onChanged: (val) => _tempRecipe = _tempRecipe.copyWith(
-                          temperature: double.tryParse(val)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildSimpleEditField(
-                label: 'Grinder',
-                initialValue: _tempRecipe.grinder ?? '',
-                onChanged: (val) =>
-                    _tempRecipe = _tempRecipe.copyWith(grinder: val),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSimpleEditField(
-                      label: 'Dripper',
-                      initialValue: _tempRecipe.dripper ?? '',
-                      onChanged: (val) =>
-                          _tempRecipe = _tempRecipe.copyWith(dripper: val),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSimpleEditField(
-                      label: 'Filter',
-                      initialValue: _tempRecipe.filter ?? '',
-                      onChanged: (val) =>
-                          _tempRecipe = _tempRecipe.copyWith(filter: val),
-                    ),
-                  ),
-                ],
+              ParameterEditSection(
+                recipe: state.tempRecipe,
+                onGrindSizeChanged: viewModel.updateGrindSize,
+                onTemperatureChanged: viewModel.updateTemperature,
+                onGrinderChanged: viewModel.updateGrinder,
+                onDripperChanged: viewModel.updateDripper,
+                onFilterChanged: viewModel.updateFilter,
               ),
               const SizedBox(height: 24),
 
               // Steps Section
-              const Text('STEPS (Adjust Water for Taste)',
-                  style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold)),
+              const Text(
+                'STEPS (Adjust Water for Taste)',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _tempRecipe.steps.length,
-                itemBuilder: (context, index) {
-                  final step = _tempRecipe.steps[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        radius: 14,
-                        child: Text('${index + 1}',
-                            style: const TextStyle(fontSize: 12)),
-                      ),
-                      title: Row(
-                        children: [
-                          const Text('Water: '),
-                          Expanded(
-                            child: TextFormField(
-                              key: ValueKey(
-                                  'step_${index}_${step.waterAmount}'), // Ensure it recreates when scaled
-                              initialValue: step.waterAmount.toStringAsFixed(1),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                      decimal: true),
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                suffixText: 'ml',
-                              ),
-                              validator: (val) {
-                                final d = double.tryParse(val ?? '');
-                                if (d == null || d < 0) return 'Invalid';
-                                return null;
-                              },
-                              onChanged: (val) {
-                                final water = double.tryParse(val) ?? 0;
-                                _updateStepWater(index, water);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: SizedBox(
-                        width: 60,
-                        child: TextFormField(
-                          key: ValueKey(
-                              'step_time_${index}_${step.waitTime.inSeconds}'),
-                          initialValue: step.waitTime.inSeconds.toString(),
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            suffixText: 's',
-                          ),
-                          onChanged: (val) {
-                            final seconds = int.tryParse(val) ?? 0;
-                            _updateStepWaitTime(index, seconds);
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
+              StepEditList(
+                steps: state.tempRecipe.steps,
+                onWaterChanged: viewModel.updateStepWater,
+                onWaitTimeChanged: viewModel.updateStepWaitTime,
               ),
 
               const SizedBox(height: 24),
 
               // Note
-              _buildSimpleEditField(
-                label: 'Note',
-                initialValue: _tempRecipe.note ?? '',
-                onChanged: (val) =>
-                    _tempRecipe = _tempRecipe.copyWith(note: val),
+              TextFormField(
+                initialValue: state.tempRecipe.note ?? '',
+                decoration: const InputDecoration(
+                  labelText: 'Note',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: viewModel.updateNote,
               ),
 
               const SizedBox(height: 40),
@@ -362,7 +143,7 @@ class _PreBrewAdjustmentScreenState
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              BrewingScreen(recipe: _tempRecipe),
+                              BrewingScreen(recipe: state.tempRecipe),
                         ),
                       );
                     }
@@ -384,40 +165,16 @@ class _PreBrewAdjustmentScreenState
     );
   }
 
-  Widget _buildSummaryItem(String label, String value) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        Text(value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildSimpleEditField({
-    required String label,
-    required String initialValue,
-    required Function(String) onChanged,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      initialValue: initialValue,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      ),
-      validator: validator,
-      onChanged: onChanged,
-    );
-  }
-
-  Future<void> _editOriginal() async {
+  Future<void> _editOriginal(
+    BuildContext context,
+    WidgetRef ref,
+    Recipe baseRecipe,
+    dynamic provider,
+  ) async {
     final updatedRecipe = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => RecipeEditScreen(recipe: _baseRecipe),
+        builder: (context) => RecipeEditScreen(recipe: baseRecipe),
       ),
     );
 
@@ -425,13 +182,10 @@ class _PreBrewAdjustmentScreenState
       // リポジトリに保存
       await ref.read(recipeRepositoryProvider).saveRecipe(updatedRecipe);
 
-      setState(() {
-        _baseRecipe = updatedRecipe;
-        // 調整中の内容もリセットして元レシピに合わせる（UXとしてその方が自然）
-        _tempRecipe = updatedRecipe;
-      });
+      // ViewModelの状態を更新
+      ref.read(provider.notifier).setBaseRecipe(updatedRecipe);
 
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Original recipe updated')),
         );
@@ -439,13 +193,13 @@ class _PreBrewAdjustmentScreenState
     }
   }
 
-  Future<void> _shareRecipe() async {
+  Future<void> _shareRecipe(BuildContext context, Recipe baseRecipe) async {
     // 共有するのは「元レシピ」か「調整後」か？
     // DetailScreenの代替機能としては「元レシピ」を共有すべき。
-    final code = RecipeSharer.encode(_baseRecipe);
+    final code = RecipeSharer.encode(baseRecipe);
     if (code.isNotEmpty) {
       await Clipboard.setData(ClipboardData(text: code));
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Recipe copied to clipboard!')),
         );
