@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/setup-github-actions
   workflow_dispatch:
 
 permissions:
