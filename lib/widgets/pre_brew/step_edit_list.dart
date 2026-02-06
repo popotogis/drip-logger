@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/brew_step.dart';
 
@@ -55,6 +56,7 @@ class _StepInputRow extends StatefulWidget {
 class _StepInputRowState extends State<_StepInputRow> {
   late TextEditingController _waterController;
   late TextEditingController _timeController;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -105,6 +107,7 @@ class _StepInputRowState extends State<_StepInputRow> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _waterController.dispose();
     _timeController.dispose();
     super.dispose();
@@ -134,7 +137,10 @@ class _StepInputRowState extends State<_StepInputRow> {
                 ),
                 onChanged: (val) {
                   final water = double.tryParse(val) ?? 0;
-                  widget.onWaterChanged(widget.index, water);
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _debounce = Timer(const Duration(milliseconds: 300), () {
+                    widget.onWaterChanged(widget.index, water);
+                  });
                 },
               ),
             ),
@@ -151,7 +157,10 @@ class _StepInputRowState extends State<_StepInputRow> {
             ),
             onChanged: (val) {
               final seconds = int.tryParse(val) ?? 0;
-              widget.onWaitTimeChanged(widget.index, seconds);
+              if (_debounce?.isActive ?? false) _debounce!.cancel();
+              _debounce = Timer(const Duration(milliseconds: 300), () {
+                widget.onWaitTimeChanged(widget.index, seconds);
+              });
             },
           ),
         ),

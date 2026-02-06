@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 class BeanWeightSection extends StatefulWidget {
@@ -20,6 +21,7 @@ class BeanWeightSection extends StatefulWidget {
 
 class _BeanWeightSectionState extends State<BeanWeightSection> {
   late TextEditingController _controller;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -52,6 +54,7 @@ class _BeanWeightSectionState extends State<BeanWeightSection> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -93,7 +96,12 @@ class _BeanWeightSectionState extends State<BeanWeightSection> {
                 },
                 onChanged: (val) {
                   final weight = double.tryParse(val) ?? 0;
-                  if (weight > 0) widget.onWeightChanged(weight);
+                  if (weight > 0) {
+                    if (_debounce?.isActive ?? false) _debounce!.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 300), () {
+                      widget.onWeightChanged(weight);
+                    });
+                  }
                 },
               ),
             ),
