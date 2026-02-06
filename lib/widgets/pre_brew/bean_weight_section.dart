@@ -33,16 +33,19 @@ class _BeanWeightSectionState extends State<BeanWeightSection> {
   void didUpdateWidget(covariant BeanWeightSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     // 外部（親Widget）からの変更があり、かつ現在入力中の値と異なる場合のみ同期する
-    // これにより、入力中のカーソル位置飛びなどを防ぐ
     if (oldWidget.beanWeight != widget.beanWeight) {
       final currentVal = double.tryParse(_controller.text);
       if (currentVal != widget.beanWeight) {
-        // 数値として異なる場合のみ更新（"15." と "15" のようなケースでの上書き防止は
-        // パース結果の比較である程度カバーできるが、完全ではない。
-        // ここでは「外部からの大きな変更（例：レシピリセット）」を優先し、
-        // 微細な入力中の整合性は onWeightChanged 側のロジックに委ねる。
-        // ただし、入力中に親が再ビルドされただけで値が変わっていない場合はここに入らないので安全。
-        _controller.text = widget.beanWeight.toString();
+        // ビルド中のsetStateエラーを防ぐためにポストフレームで実行
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            // 再度チェック（フレーム間にまた変わっている可能性への保険）
+            final currentValNow = double.tryParse(_controller.text);
+            if (currentValNow != widget.beanWeight) {
+              _controller.text = widget.beanWeight.toString();
+            }
+          }
+        });
       }
     }
   }
