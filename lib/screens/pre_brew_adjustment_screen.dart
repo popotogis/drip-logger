@@ -116,6 +116,10 @@ class PreBrewAdjustmentScreen extends ConsumerWidget {
                 steps: state.tempRecipe.steps,
                 onWaterChanged: viewModel.updateStepWater,
                 onWaitTimeChanged: viewModel.updateStepWaitTime,
+                onTypeChanged: viewModel.updateStepType,
+                onDescriptionChanged: viewModel.updateStepDescription,
+                onAddStep: viewModel.addStep,
+                onRemoveStep: viewModel.removeStep,
               ),
 
               const SizedBox(height: 24),

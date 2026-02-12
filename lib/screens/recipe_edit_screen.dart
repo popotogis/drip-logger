@@ -136,47 +136,60 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
     Navigator.pop(context, newRecipe);
   }
 
-  // ステップ数が変更されたときにリストを調整する
-  void _updateStepCount(String value) {
-    // 入力が空の場合は0として扱う
-    if (value.isEmpty) {
-      if (_steps.isNotEmpty) {
-        setState(() {
-          _steps.clear();
-        });
-      }
-      return;
-    }
-
-    final count = int.tryParse(value);
-    if (count == null) return; // 数値でない場合は無視
-
+  // ステップを追加する
+  void _addStep() {
     setState(() {
-      if (count > _steps.length) {
-        // 増えた分を追加 (初期値0でおく)
-        final diff = count - _steps.length;
-        for (var i = 0; i < diff; i++) {
-          _steps.add(
-              BrewStep(waterAmount: 0, waitTime: const Duration(seconds: 0)));
-        }
-      } else if (count < _steps.length) {
-        // 減った分を末尾から削除
-        _steps.removeRange(count, _steps.length);
-      }
+      _steps.add(
+        BrewStep(
+          type: BrewStepType.pour,
+          waterAmount: 0,
+          waitTime: const Duration(seconds: 0),
+        ),
+      );
+    });
+  }
+
+  // ステップを削除する
+  void _removeStep(int index) {
+    if (index < 0 || index >= _steps.length) return;
+    setState(() {
+      _steps.removeAt(index);
     });
   }
 
   // 特定のステップの値を更新する
-  void _updateStep(int index, {double? water, int? time}) {
+  void _updateStep(int index,
+      {double? water, int? time, BrewStepType? type, String? description}) {
     if (index < 0 || index >= _steps.length) return;
 
     final oldStep = _steps[index];
-    // setState不要 (FormのonSaved/onChangedでデータモデルだけ更新すれば、次回buildで反映される。
-    // ただし、即座に値を確定させるためにデータは更新しておく)
-    _steps[index] = BrewStep(
-      waterAmount: water ?? oldStep.waterAmount,
-      waitTime: time != null ? Duration(seconds: time) : oldStep.waitTime,
-    );
+
+    // typeがwait/stirに変更された場合、waterを0にする
+    double newWater = water ?? oldStep.waterAmount;
+    final newType = type ?? oldStep.type;
+
+    if (newType == BrewStepType.wait || newType == BrewStepType.stir) {
+      if (type != null) {
+        // タイプが明示的に変更された場合のみ0リセット（ユーザーが意図して入力している場合は残すべきか？ -> 仕様では0固定）
+        // ここでは「タイプ変更時」および「入力時」に強制的に0にするロジックにするか、
+        // UIで隠れているので自然に0になるのを待つかだが、データ整合性のために強制0にする
+        newWater = 0;
+      } else {
+        // type変更なしでwater変更が来た場合も、wait/stirなら0に強制する？
+        // いや、water入力自体非表示なので来ないはずだが、念のため
+        // newWater = 0; // これを有効にすると water入力を受け付けなくなる
+      }
+    }
+
+    // setStateで再描画して、Type変更時のUI切り替え（Water入力の表示/非表示）を即時反映させる
+    setState(() {
+      _steps[index] = BrewStep(
+        type: newType,
+        waterAmount: newWater,
+        waitTime: time != null ? Duration(seconds: time) : oldStep.waitTime,
+        description: description ?? oldStep.description,
+      );
+    });
   }
 
   @override
@@ -261,30 +274,12 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // --- ステップ数入力 ---
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Brewing Steps',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue:
-                            _steps.isNotEmpty ? _steps.length.toString() : '',
-                        decoration: const InputDecoration(
-                          labelText: 'Count',
-                          helperText: 'Enter number of steps',
-                        ),
-                        keyboardType: TextInputType.number,
-                        // ステップ数を入力すると、リストのサイズが変わる
-                        onChanged: _updateStepCount,
-                      ),
-                    ),
-                  ],
+                // --- ステップ数入力 (削除) ---
+                // Row(..., Expanded(child: TextFormField(..., onChanged: _updateStepCount))),
+
+                const Text(
+                  'Brewing Steps',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
 
@@ -295,63 +290,173 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                   itemCount: _steps.length,
                   itemBuilder: (context, index) {
                     final step = _steps[index];
+                    final isPour = step.type == BrewStepType.pour;
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
-                      elevation: 0, // HIG style
-                      color: Colors.grey[200], // HIG style background
+                      elevation: 0,
+                      color: Colors.grey[200],
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Row(
+                        child: Column(
                           children: [
-                            Text(
-                              'Step ${index + 1}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(width: 16),
-                            // 湯量入力
-                            Expanded(
-                              child: TextFormField(
-                                decoration: const InputDecoration(
-                                  labelText: 'Water',
-                                  suffixText: 'ml',
-                                  isDense: true,
-                                  border: InputBorder.none, // Cleaner look
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  child: Text('${index + 1}',
+                                      style: const TextStyle(fontSize: 12)),
                                 ),
-                                keyboardType: TextInputType.number,
-                                // 初期値をセット（簡易実装）
-                                initialValue: step.waterAmount > 0
-                                    ? step.waterAmount.toString()
-                                    : '',
-                                onChanged: (val) => _updateStep(index,
-                                    water: double.tryParse(val)),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            // 時間入力
-                            Expanded(
-                              child: TextFormField(
-                                decoration: const InputDecoration(
-                                  labelText: 'Time',
-                                  suffixText: 'sec',
-                                  isDense: true,
-                                  border: InputBorder.none,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      // Top Row: Type & Time
+                                      Row(
+                                        children: [
+                                          // Type Selector
+                                          SizedBox(
+                                            width: 100,
+                                            child: InputDecorator(
+                                              decoration: const InputDecoration(
+                                                isDense: true,
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                        vertical: 8),
+                                                border: InputBorder.none,
+                                              ),
+                                              child:
+                                                  DropdownButtonHideUnderline(
+                                                child: DropdownButton<
+                                                    BrewStepType>(
+                                                  value: step.type,
+                                                  isDense: true,
+                                                  items: BrewStepType.values
+                                                      .map((type) {
+                                                    return DropdownMenuItem(
+                                                      value: type,
+                                                      child: Text(
+                                                          type.name
+                                                              .toUpperCase(),
+                                                          style:
+                                                              const TextStyle(
+                                                                  fontSize:
+                                                                      12)),
+                                                    );
+                                                  }).toList(),
+                                                  onChanged: (val) {
+                                                    if (val != null) {
+                                                      _updateStep(index,
+                                                          type: val);
+                                                    }
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          // Time Input
+                                          SizedBox(
+                                            width: 60,
+                                            child: TextFormField(
+                                              decoration: const InputDecoration(
+                                                labelText: 'Time',
+                                                suffixText: 's',
+                                                isDense: true,
+                                                border: InputBorder.none,
+                                              ),
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              initialValue: step
+                                                  .waitTime.inSeconds
+                                                  .toString(),
+                                              onChanged: (val) => _updateStep(
+                                                  index,
+                                                  time: int.tryParse(val)),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      // Middle Row: Water (Only for Pour)
+                                      if (isPour) ...[
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.water_drop,
+                                                size: 16, color: Colors.blue),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: TextFormField(
+                                                decoration:
+                                                    const InputDecoration(
+                                                  labelText: 'Water Amount',
+                                                  suffixText: 'ml',
+                                                  isDense: true,
+                                                  border: InputBorder.none,
+                                                ),
+                                                keyboardType:
+                                                    const TextInputType
+                                                        .numberWithOptions(
+                                                        decimal: true),
+                                                initialValue:
+                                                    step.waterAmount > 0
+                                                        ? step.waterAmount
+                                                            .toString()
+                                                        : '',
+                                                onChanged: (val) => _updateStep(
+                                                    index,
+                                                    water:
+                                                        double.tryParse(val)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                      // Bottom Row: Description
+                                      const SizedBox(height: 8),
+                                      TextFormField(
+                                        initialValue: step.description ?? '',
+                                        decoration: const InputDecoration(
+                                          labelText: 'Description / Note',
+                                          isDense: true,
+                                          prefixIcon:
+                                              Icon(Icons.notes, size: 16),
+                                          border: InputBorder.none,
+                                        ),
+                                        onChanged: (val) => _updateStep(index,
+                                            description: val),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                keyboardType: TextInputType.number,
-                                initialValue: step.waitTime.inSeconds > 0
-                                    ? step.waitTime.inSeconds.toString()
-                                    : '',
-                                onChanged: (val) =>
-                                    _updateStep(index, time: int.tryParse(val)),
-                              ),
+                                // Remove Button (Moved to the right end)
+                                IconButton(
+                                  icon: const Icon(Icons.close,
+                                      size: 20, color: Colors.grey),
+                                  onPressed: () => _removeStep(index),
+                                  tooltip: 'Remove Step',
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                     );
                   },
+                ),
+                const SizedBox(height: 16),
+
+                // Add Step Button
+                OutlinedButton.icon(
+                  onPressed: _addStep,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Step'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
                 ),
                 const SizedBox(height: 24),
 

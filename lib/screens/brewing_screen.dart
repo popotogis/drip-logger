@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/recipe.dart';
+import '../models/brew_step.dart';
 import 'brew_result_screen.dart';
 import '../viewmodels/brewing_viewmodel.dart';
 import '../widgets/brewing/brew_progress_timeline.dart';
@@ -103,26 +104,135 @@ class BrewingScreen extends ConsumerWidget {
             // Main Info
             Column(
               children: [
-                Text(
-                  '${state.currentStepTargetWater.toStringAsFixed(0)}ml',
-                  style: const TextStyle(
-                      fontSize: 48, fontWeight: FontWeight.bold),
+                // Step Type Badge
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _getStepColor(currentStep.type).withAlpha(51),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _getStepColor(currentStep.type)),
+                  ),
+                  child: Text(
+                    currentStep.type.name.toUpperCase(),
+                    style: TextStyle(
+                      color: _getStepColor(currentStep.type),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
                 ),
-                Text(
-                  'Target Water',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                ),
+                const SizedBox(height: 16),
+
+                // Main Value (Water or Time)
+                if (currentStep.type == BrewStepType.pour) ...[
+                  Text(
+                    '${state.currentStepTargetWater.toStringAsFixed(0)}ml',
+                    style: const TextStyle(
+                        fontSize: 48, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Target Water',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                ] else ...[
+                  // Wait / Stir の場合は残り時間を強調してもいいが、
+                  // とりあえずは「Wait」等を表示しつつ、上のTimerで時間はわかるので
+                  // ここでは「あと何秒」を出すか、シンプルにアイコンを出すか。
+                  // 設計通り「湯量」は出さない。
+                  Icon(
+                    currentStep.type == BrewStepType.stir
+                        ? Icons.gesture
+                        : Icons.timer,
+                    size: 48,
+                    color: _getStepColor(currentStep.type),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${currentStep.waitTime.inSeconds}sec',
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ],
+
+                // Description
+                if (currentStep.description != null &&
+                    currentStep.description!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.symmetric(horizontal: 32),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withAlpha(26),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.amber.withAlpha(128)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.info_outline,
+                            size: 20, color: Colors.amber),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            currentStep.description!,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[800],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
 
-            // Secondary Info
+            // Secondary Info & Next Step
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildMiniStat('Step', '${safeIndex + 1}/$stepCount'),
-                const SizedBox(width: 40),
-                _buildMiniStat('Wait', '${currentStep.waitTime.inSeconds}s'),
+                const SizedBox(width: 24),
+                // Next Step Info
+                if (safeIndex + 1 < stepCount) ...[
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(width: 24),
+                  Column(
+                    children: [
+                      Text(
+                        'NEXT',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(_getStepIcon(recipe.steps[safeIndex + 1].type),
+                              size: 16, color: Colors.grey[700]),
+                          const SizedBox(width: 4),
+                          Text(
+                            recipe.steps[safeIndex + 1].type.name.toUpperCase(),
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700]),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
 
@@ -181,5 +291,27 @@ class BrewingScreen extends ConsumerWidget {
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
       ],
     );
+  }
+
+  Color _getStepColor(BrewStepType type) {
+    switch (type) {
+      case BrewStepType.pour:
+        return Colors.blue; // or Theme primary
+      case BrewStepType.wait:
+        return Colors.orange;
+      case BrewStepType.stir:
+        return Colors.green;
+    }
+  }
+
+  IconData _getStepIcon(BrewStepType type) {
+    switch (type) {
+      case BrewStepType.pour:
+        return Icons.water_drop;
+      case BrewStepType.wait:
+        return Icons.timer;
+      case BrewStepType.stir:
+        return Icons.gesture;
+    }
   }
 }

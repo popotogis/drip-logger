@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/recipe.dart';
+import '../../models/brew_step.dart';
 
 class BrewProgressTimeline extends StatelessWidget {
   final Recipe recipe;
@@ -43,6 +44,19 @@ class BrewProgressTimeline extends StatelessWidget {
 
         accumulatedTime += stepSeconds;
 
+        Color stepColor;
+        switch (step.type) {
+          case BrewStepType.pour:
+            stepColor = Theme.of(context).primaryColor;
+            break;
+          case BrewStepType.wait:
+            stepColor = Colors.orange; // 待機はオレンジ
+            break;
+          case BrewStepType.stir:
+            stepColor = Colors.green; // 攪拌は緑
+            break;
+        }
+
         return Expanded(
           flex: flex,
           child: Container(
@@ -52,9 +66,8 @@ class BrewProgressTimeline extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: value,
-                backgroundColor: Colors.grey[400],
-                valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).primaryColor),
+                backgroundColor: Colors.grey[300], // 背景を少し薄く
+                valueColor: AlwaysStoppedAnimation<Color>(stepColor),
               ),
             ),
           ),

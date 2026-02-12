@@ -53,14 +53,17 @@ class PreBrewViewModel extends StateNotifier<PreBrewState> {
   }
 
   void updateStepWater(int index, double newWater) {
-    final currentRecipe = state.tempRecipe;
+    var currentRecipe = state.tempRecipe;
     final newSteps = List<BrewStep>.from(currentRecipe.steps);
 
     if (index < 0 || index >= newSteps.length) return;
 
+    final oldStep = newSteps[index];
     newSteps[index] = BrewStep(
+      type: oldStep.type,
       waterAmount: newWater,
-      waitTime: newSteps[index].waitTime,
+      waitTime: oldStep.waitTime,
+      description: oldStep.description,
     );
 
     // 総湯量も更新
@@ -81,12 +84,104 @@ class PreBrewViewModel extends StateNotifier<PreBrewState> {
 
     if (index < 0 || index >= newSteps.length) return;
 
+    final oldStep = newSteps[index];
     newSteps[index] = BrewStep(
-      waterAmount: newSteps[index].waterAmount,
+      type: oldStep.type,
+      waterAmount: oldStep.waterAmount,
       waitTime: Duration(seconds: newSeconds),
+      description: oldStep.description,
     );
 
     final updated = currentRecipe.copyWith(steps: newSteps);
+    state = state.copyWith(tempRecipe: updated);
+  }
+
+  void updateStepType(int index, BrewStepType newType) {
+    final currentRecipe = state.tempRecipe;
+    final newSteps = List<BrewStep>.from(currentRecipe.steps);
+
+    if (index < 0 || index >= newSteps.length) return;
+
+    final oldStep = newSteps[index];
+
+    // wait/stir の場合は waterAmount を 0 にする
+    final newWater =
+        (newType == BrewStepType.wait || newType == BrewStepType.stir)
+            ? 0.0
+            : oldStep.waterAmount;
+
+    newSteps[index] = BrewStep(
+      type: newType,
+      waterAmount: newWater,
+      waitTime: oldStep.waitTime,
+      description: oldStep.description,
+    );
+
+    // 総湯量も再計算
+    final newTotal = newSteps.fold(0.0, (sum, s) => sum + s.waterAmount);
+
+    final updated = currentRecipe.copyWith(
+      steps: newSteps,
+      totalWaterAmount: newTotal,
+    );
+    state = state.copyWith(tempRecipe: updated);
+  }
+
+  void updateStepDescription(int index, String newDescription) {
+    final currentRecipe = state.tempRecipe;
+    final newSteps = List<BrewStep>.from(currentRecipe.steps);
+
+    if (index < 0 || index >= newSteps.length) return;
+
+    final oldStep = newSteps[index];
+    newSteps[index] = BrewStep(
+      type: oldStep.type,
+      waterAmount: oldStep.waterAmount,
+      waitTime: oldStep.waitTime,
+      description: newDescription,
+    );
+
+    final updated = currentRecipe.copyWith(steps: newSteps);
+    state = state.copyWith(tempRecipe: updated);
+  }
+
+  void addStep() {
+    final currentRecipe = state.tempRecipe;
+    final newSteps = List<BrewStep>.from(currentRecipe.steps);
+
+    newSteps.add(
+      BrewStep(
+        type: BrewStepType.pour,
+        waterAmount: 0,
+        waitTime: const Duration(seconds: 0),
+      ),
+    );
+
+    // 総湯量も更新 (0なので変わらないが念のため)
+    final newTotal = newSteps.fold(0.0, (sum, s) => sum + s.waterAmount);
+
+    final updated = currentRecipe.copyWith(
+      steps: newSteps,
+      totalWaterAmount: newTotal,
+    );
+    state = state.copyWith(tempRecipe: updated);
+  }
+
+  void removeStep(int index) {
+    final currentRecipe = state.tempRecipe;
+    final newSteps = List<BrewStep>.from(currentRecipe.steps);
+
+    if (index < 0 || index >= newSteps.length) return;
+
+    newSteps.removeAt(index);
+
+    // 総湯量も更新
+    final newTotal = newSteps.fold(0.0, (sum, s) => sum + s.waterAmount);
+
+    final updated = currentRecipe.copyWith(
+      steps: newSteps,
+      totalWaterAmount: newTotal,
+    );
     state = state.copyWith(tempRecipe: updated);
   }
 
