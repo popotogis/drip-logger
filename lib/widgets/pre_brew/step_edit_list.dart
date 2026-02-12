@@ -167,149 +167,156 @@ class _StepInputRowState extends State<_StepInputRow> {
   Widget build(BuildContext context) {
     final isPour = widget.step.type == BrewStepType.pour;
 
+    Color cardColor;
+    switch (widget.step.type) {
+      case BrewStepType.pour:
+        cardColor = Theme.of(context).primaryColor.withValues(alpha: 0.1);
+        break;
+      case BrewStepType.wait:
+        cardColor = Colors.orange.withValues(alpha: 0.1);
+        break;
+      case BrewStepType.stir:
+        cardColor = Colors.green.withValues(alpha: 0.1);
+        break;
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      // elevation: 0, // RecipeEditScreenに合わせるならelevation 0 + grey background 等が良いが、
-      // ここでは既存デザイン(Cardデフォルト)を維持しつつ機能追加に留めるか、統一するか。
-      // PreBrewAdjustmentScreenは白背景なのでCardデフォルトでOK。
+      color: cardColor,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
         child: Column(
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Index
                 CircleAvatar(
-                  radius: 14,
+                  radius: 12,
                   child: Text('${widget.index + 1}',
-                      style: const TextStyle(fontSize: 12)),
+                      style: const TextStyle(fontSize: 10)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    children: [
-                      // Top Row: Type Selector & Time
-                      Row(
-                        children: [
-                          // Type Selector
-                          SizedBox(
-                            width: 100,
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                contentPadding:
-                                    EdgeInsets.symmetric(vertical: 8),
-                                border: InputBorder.none,
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<BrewStepType>(
-                                  value: widget.step.type,
-                                  isDense: true,
-                                  items: BrewStepType.values.map((type) {
-                                    return DropdownMenuItem(
-                                      value: type,
-                                      child: Text(type.name.toUpperCase(),
-                                          style: const TextStyle(fontSize: 12)),
-                                    );
-                                  }).toList(),
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      widget.onTypeChanged(widget.index, val);
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          // Wait Time Input
-                          SizedBox(
-                            width: 60,
-                            child: TextFormField(
-                              controller: _timeController,
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                suffixText: 's',
-                                labelText: 'Time',
-                              ),
-                              onChanged: (val) {
-                                final seconds = int.tryParse(val) ?? 0;
-                                if (_debounce?.isActive ?? false) {
-                                  _debounce!.cancel();
-                                }
-                                _debounce = Timer(
-                                    const Duration(milliseconds: 300), () {
-                                  widget.onWaitTimeChanged(
-                                      widget.index, seconds);
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      // Middle Row: Water Amount (Only for Pour)
-                      if (isPour) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.water_drop,
-                                size: 16, color: Colors.blue),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _waterController,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                        decimal: true),
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  suffixText: 'ml',
-                                  labelText: 'Water Amount',
-                                ),
-                                onChanged: (val) {
-                                  final water = double.tryParse(val) ?? 0;
-                                  if (_debounce?.isActive ?? false) {
-                                    _debounce!.cancel();
-                                  }
-                                  _debounce = Timer(
-                                      const Duration(milliseconds: 300), () {
-                                    widget.onWaterChanged(widget.index, water);
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      // Bottom Row: Description
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _descController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description / Note',
-                          isDense: true,
-                          prefixIcon: Icon(Icons.notes, size: 16),
-                        ),
+                const SizedBox(width: 8),
+
+                // Type Selector (Compact)
+                SizedBox(
+                  width: 80,
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                      border: InputBorder.none,
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<BrewStepType>(
+                        value: widget.step.type,
+                        isDense: true,
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black87),
+                        items: BrewStepType.values.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type.name.toUpperCase()),
+                          );
+                        }).toList(),
                         onChanged: (val) {
-                          if (_debounce?.isActive ?? false) _debounce!.cancel();
-                          _debounce =
-                              Timer(const Duration(milliseconds: 300), () {
-                            widget.onDescriptionChanged(widget.index, val);
-                          });
+                          if (val != null) {
+                            widget.onTypeChanged(widget.index, val);
+                          }
                         },
                       ),
-                    ],
+                    ),
                   ),
                 ),
+
+                const SizedBox(width: 8),
+
+                // Water Amount (Only for Pour)
+                if (isPour) ...[
+                  Expanded(
+                    flex: 2,
+                    child: TextFormField(
+                      controller: _waterController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontSize: 13),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        labelText: 'ml',
+                        floatingLabelBehavior: FloatingLabelBehavior.auto,
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (val) {
+                        final water = double.tryParse(val) ?? 0;
+                        if (_debounce?.isActive ?? false) _debounce!.cancel();
+                        _debounce =
+                            Timer(const Duration(milliseconds: 300), () {
+                          widget.onWaterChanged(widget.index, water);
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ] else
+                  const Spacer(flex: 2),
+
+                // Wait Time
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _timeController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 13),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      labelText: 'sec',
+                      floatingLabelBehavior: FloatingLabelBehavior.auto,
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (val) {
+                      final seconds = int.tryParse(val) ?? 0;
+                      if (_debounce?.isActive ?? false) _debounce!.cancel();
+                      _debounce = Timer(const Duration(milliseconds: 300), () {
+                        widget.onWaitTimeChanged(widget.index, seconds);
+                      });
+                    },
+                  ),
+                ),
+
                 // Remove Button
                 if (widget.onRemoveStep != null)
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                    icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                     onPressed: () => widget.onRemoveStep!(widget.index),
-                    tooltip: 'Remove Step',
                   ),
               ],
+            ),
+
+            // Description (Compact)
+            const SizedBox(height: 4),
+            TextFormField(
+              controller: _descController,
+              style: const TextStyle(fontSize: 12),
+              decoration: const InputDecoration(
+                isDense: true,
+                hintText: 'Note...',
+                prefixIcon: Icon(Icons.notes, size: 14),
+                prefixIconConstraints:
+                    BoxConstraints(minWidth: 20, maxHeight: 20),
+                contentPadding: EdgeInsets.symmetric(vertical: 4),
+                border: InputBorder.none,
+              ),
+              onChanged: (val) {
+                if (_debounce?.isActive ?? false) _debounce!.cancel();
+                _debounce = Timer(const Duration(milliseconds: 300), () {
+                  widget.onDescriptionChanged(widget.index, val);
+                });
+              },
             ),
           ],
         ),
