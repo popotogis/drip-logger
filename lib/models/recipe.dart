@@ -169,6 +169,8 @@ class Recipe {
     for (int i = 0; i < steps.length; i++) {
       if (steps[i].waterAmount != other.steps[i].waterAmount) return true;
       if (steps[i].waitTime != other.steps[i].waitTime) return true;
+      if (steps[i].type != other.steps[i].type) return true;
+      if (steps[i].description != other.steps[i].description) return true;
     }
 
     return false;
