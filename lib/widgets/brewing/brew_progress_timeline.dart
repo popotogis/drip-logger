@@ -47,13 +47,13 @@ class BrewProgressTimeline extends StatelessWidget {
         Color stepColor;
         switch (step.type) {
           case BrewStepType.pour:
-            stepColor = Theme.of(context).primaryColor;
+            stepColor = Colors.blue;
             break;
           case BrewStepType.wait:
-            stepColor = Colors.orange; // 待機はオレンジ
+            stepColor = Colors.grey;
             break;
           case BrewStepType.stir:
-            stepColor = Colors.green; // 攪拌は緑
+            stepColor = Colors.green;
             break;
         }
 

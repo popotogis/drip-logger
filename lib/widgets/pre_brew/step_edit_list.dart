@@ -170,10 +170,10 @@ class _StepInputRowState extends State<_StepInputRow> {
     Color cardColor;
     switch (widget.step.type) {
       case BrewStepType.pour:
-        cardColor = Theme.of(context).primaryColor.withValues(alpha: 0.1);
+        cardColor = Colors.blue.withValues(alpha: 0.1);
         break;
       case BrewStepType.wait:
-        cardColor = Colors.orange.withValues(alpha: 0.1);
+        cardColor = Colors.grey.withValues(alpha: 0.1);
         break;
       case BrewStepType.stir:
         cardColor = Colors.green.withValues(alpha: 0.1);
