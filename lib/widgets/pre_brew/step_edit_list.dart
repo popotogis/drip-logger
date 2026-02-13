@@ -11,6 +11,7 @@ class StepEditList extends StatelessWidget {
   final VoidCallback?
       onAddStep; // Optional to support read-only viewing if needed
   final Function(int index)? onRemoveStep;
+  final Function(int oldIndex, int newIndex)? onReorder;
 
   const StepEditList({
     super.key,
@@ -21,31 +22,56 @@ class StepEditList extends StatelessWidget {
     required this.onDescriptionChanged,
     this.onAddStep,
     this.onRemoveStep,
+    this.onReorder,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: steps.length,
-          itemBuilder: (context, index) {
-            final step = steps[index];
-            return _StepInputRow(
-              // Keyをindexベースにして、値が変わってもWidget自体は再利用されるようにする
-              key: ValueKey('step_row_$index'),
-              index: index,
-              step: step,
-              onWaterChanged: onWaterChanged,
-              onWaitTimeChanged: onWaitTimeChanged,
-              onTypeChanged: onTypeChanged,
-              onDescriptionChanged: onDescriptionChanged,
-              onRemoveStep: onRemoveStep,
-            );
-          },
-        ),
+        if (onReorder != null)
+          ReorderableListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            onReorder: onReorder!,
+            itemCount: steps.length,
+            itemBuilder: (context, index) {
+              final step = steps[index];
+              return _StepInputRow(
+                // Use ValueKey(step.uid) to maintain state during edits and reordering
+                key: ValueKey(step.uid),
+                index: index,
+                step: step,
+                onWaterChanged: onWaterChanged,
+                onWaitTimeChanged: onWaitTimeChanged,
+                onTypeChanged: onTypeChanged,
+                onDescriptionChanged: onDescriptionChanged,
+                onRemoveStep: onRemoveStep,
+                showDragHandle: true,
+              );
+            },
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: steps.length,
+            itemBuilder: (context, index) {
+              final step = steps[index];
+              return _StepInputRow(
+                key: ValueKey(step.uid),
+                index: index,
+                step: step,
+                onWaterChanged: onWaterChanged,
+                onWaitTimeChanged: onWaitTimeChanged,
+                onTypeChanged: onTypeChanged,
+                onDescriptionChanged: onDescriptionChanged,
+                onRemoveStep: onRemoveStep,
+                showDragHandle: false,
+              );
+            },
+          ),
         if (onAddStep != null) ...[
           const SizedBox(height: 16),
           // Add Step Button
@@ -71,6 +97,7 @@ class _StepInputRow extends StatefulWidget {
   final Function(int index, BrewStepType value) onTypeChanged;
   final Function(int index, String value) onDescriptionChanged;
   final Function(int index)? onRemoveStep;
+  final bool showDragHandle;
 
   const _StepInputRow({
     super.key,
@@ -81,6 +108,7 @@ class _StepInputRow extends StatefulWidget {
     required this.onTypeChanged,
     required this.onDescriptionChanged,
     this.onRemoveStep,
+    required this.showDragHandle,
   });
 
   @override
@@ -170,13 +198,13 @@ class _StepInputRowState extends State<_StepInputRow> {
     Color cardColor;
     switch (widget.step.type) {
       case BrewStepType.pour:
-        cardColor = Colors.blue.withValues(alpha: 0.1);
+        cardColor = Colors.blue.withAlpha(26);
         break;
       case BrewStepType.wait:
-        cardColor = Colors.grey.withValues(alpha: 0.1);
+        cardColor = Colors.grey.withAlpha(26);
         break;
       case BrewStepType.stir:
-        cardColor = Colors.green.withValues(alpha: 0.1);
+        cardColor = Colors.green.withAlpha(26);
         break;
     }
 
@@ -189,6 +217,14 @@ class _StepInputRowState extends State<_StepInputRow> {
           children: [
             Row(
               children: [
+                if (widget.showDragHandle) ...[
+                  ReorderableDragStartListener(
+                    index: widget.index,
+                    child: const Icon(Icons.drag_handle, color: Colors.grey),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+
                 // Index
                 CircleAvatar(
                   radius: 12,

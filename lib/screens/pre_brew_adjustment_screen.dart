@@ -16,18 +16,25 @@ import '../widgets/pre_brew/step_edit_list.dart';
 /// 抽出前調整画面
 ///
 /// レシピを元に、その時の状況（豆の量や味の好み）に合わせて一時的にパラメータを変更します。
-class PreBrewAdjustmentScreen extends ConsumerWidget {
+class PreBrewAdjustmentScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
-
-  // Form validation key
-  static final _formKey = GlobalKey<FormState>();
 
   const PreBrewAdjustmentScreen({super.key, required this.recipe});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PreBrewAdjustmentScreen> createState() =>
+      _PreBrewAdjustmentScreenState();
+}
+
+class _PreBrewAdjustmentScreenState
+    extends ConsumerState<PreBrewAdjustmentScreen> {
+  // Form validation key (Instance variable)
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
     // ViewModel provider (family)
-    final provider = preBrewViewModelProvider(recipe);
+    final provider = preBrewViewModelProvider(widget.recipe);
     final state = ref.watch(provider);
     final viewModel = ref.read(provider.notifier);
 
@@ -120,6 +127,7 @@ class PreBrewAdjustmentScreen extends ConsumerWidget {
                 onDescriptionChanged: viewModel.updateStepDescription,
                 onAddStep: viewModel.addStep,
                 onRemoveStep: viewModel.removeStep,
+                onReorder: viewModel.reorderSteps,
               ),
 
               const SizedBox(height: 24),

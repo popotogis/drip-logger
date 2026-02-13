@@ -158,6 +158,17 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
     });
   }
 
+  // ステップを入れ替える
+  void _reorderSteps(int oldIndex, int newIndex) {
+    setState(() {
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      final item = _steps.removeAt(oldIndex);
+      _steps.insert(newIndex, item);
+    });
+  }
+
   // 特定のステップの値を更新する
   void _updateStep(int index,
       {double? water, int? time, BrewStepType? type, String? description}) {
@@ -189,6 +200,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
         waterAmount: newWater,
         waitTime: time != null ? Duration(seconds: time) : oldStep.waitTime,
         description: description ?? oldStep.description,
+        uid: oldStep.uid,
       );
     });
   }
@@ -296,6 +308,7 @@ class _RecipeEditScreenState extends State<RecipeEditScreen> {
                       _updateStep(index, description: val),
                   onAddStep: _addStep,
                   onRemoveStep: _removeStep,
+                  onReorder: _reorderSteps,
                 ),
                 const SizedBox(height: 24),
 

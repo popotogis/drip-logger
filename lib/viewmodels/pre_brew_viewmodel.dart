@@ -64,6 +64,7 @@ class PreBrewViewModel extends StateNotifier<PreBrewState> {
       waterAmount: newWater,
       waitTime: oldStep.waitTime,
       description: oldStep.description,
+      uid: oldStep.uid,
     );
 
     // 総湯量も更新
@@ -90,6 +91,7 @@ class PreBrewViewModel extends StateNotifier<PreBrewState> {
       waterAmount: oldStep.waterAmount,
       waitTime: Duration(seconds: newSeconds),
       description: oldStep.description,
+      uid: oldStep.uid,
     );
 
     final updated = currentRecipe.copyWith(steps: newSteps);
@@ -115,6 +117,7 @@ class PreBrewViewModel extends StateNotifier<PreBrewState> {
       waterAmount: newWater,
       waitTime: oldStep.waitTime,
       description: oldStep.description,
+      uid: oldStep.uid,
     );
 
     // 総湯量も再計算
@@ -139,6 +142,7 @@ class PreBrewViewModel extends StateNotifier<PreBrewState> {
       waterAmount: oldStep.waterAmount,
       waitTime: oldStep.waitTime,
       description: newDescription,
+      uid: oldStep.uid,
     );
 
     final updated = currentRecipe.copyWith(steps: newSteps);
@@ -182,6 +186,29 @@ class PreBrewViewModel extends StateNotifier<PreBrewState> {
       steps: newSteps,
       totalWaterAmount: newTotal,
     );
+    state = state.copyWith(tempRecipe: updated);
+  }
+
+  void reorderSteps(int oldIndex, int newIndex) {
+    // ReorderableListViewの仕様で、移動先が後方の場合はindexがずれるため補正
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    final currentRecipe = state.tempRecipe;
+    final newSteps = List<BrewStep>.from(currentRecipe.steps);
+
+    if (oldIndex < 0 ||
+        oldIndex >= newSteps.length ||
+        newIndex < 0 ||
+        newIndex >= newSteps.length) {
+      return;
+    }
+
+    final item = newSteps.removeAt(oldIndex);
+    newSteps.insert(newIndex, item);
+
+    final updated = currentRecipe.copyWith(steps: newSteps);
     state = state.copyWith(tempRecipe: updated);
   }
 

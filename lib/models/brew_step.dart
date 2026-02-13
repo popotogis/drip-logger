@@ -22,18 +22,26 @@ class BrewStep {
   /// 手順の説明 (任意)
   final String? description;
 
+  /// UI識別用のID (保存はしない、実行時のみ使用)
+  /// これがないとReorderableListViewで入力中にフォーカスが外れる
+  final String uid;
+
+  static int _uidCounter = 0;
+
   BrewStep({
     this.type = BrewStepType.pour,
     required this.waterAmount,
     required this.waitTime,
     this.description,
-  });
+    String? uid,
+  }) : uid = uid ?? '${DateTime.now().microsecondsSinceEpoch}_${_uidCounter++}';
 
   Map<String, dynamic> toJson() => {
         'type': type.name,
         'waterAmount': waterAmount,
         'waitTime': waitTime.inSeconds,
         'description': description,
+        // uidは保存しない (毎回生成で良い、あるいは保存しても良いが必須ではない)
       };
 
   factory BrewStep.fromJson(Map<String, dynamic> json) {
@@ -58,6 +66,31 @@ class BrewStep {
       waterAmount: scaledWater,
       waitTime: waitTime,
       description: description,
+      // scaleした場合は新しいステップとみなすか？
+      // 調整画面でスライダー動かしたときにIDが変わるとフォーカス外れるか？
+      // スライダー操作中はTextFieldにフォーカスないから大丈夫か。
+      // いや、TextFieldで数値入力中に他が動くことはない。
+      // しかし、maintainRatio=trueでBeanWeightを変えると全ステップがscaleされる。
+      // その時ステップリストの見た目は変わらない方が良いのでuid維持したいが、
+      // BeanWeight変更は「別の操作」なのでフォーカスは関係ない。
+      // 逆に、RecipeEditScreenで数値をいじるときはscale呼ばれない。
+      uid: uid, // IDを引き継ぐ
+    );
+  }
+
+  BrewStep copyWith({
+    BrewStepType? type,
+    double? waterAmount,
+    Duration? waitTime,
+    String? description,
+    String? uid,
+  }) {
+    return BrewStep(
+      type: type ?? this.type,
+      waterAmount: waterAmount ?? this.waterAmount,
+      waitTime: waitTime ?? this.waitTime,
+      description: description ?? this.description,
+      uid: uid ?? this.uid,
     );
   }
 }
