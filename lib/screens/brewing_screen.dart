@@ -163,15 +163,17 @@ class BrewingScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.symmetric(horizontal: 32),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withAlpha(26),
+                      color: _getStepColor(currentStep.type).withAlpha(26),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.amber.withAlpha(128)),
+                      border: Border.all(
+                          color:
+                              _getStepColor(currentStep.type).withAlpha(128)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.info_outline,
-                            size: 20, color: Colors.amber),
+                        Icon(Icons.info_outline,
+                            size: 20, color: _getStepColor(currentStep.type)),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -298,7 +300,7 @@ class BrewingScreen extends ConsumerWidget {
       case BrewStepType.pour:
         return Colors.blue; // or Theme primary
       case BrewStepType.wait:
-        return Colors.orange;
+        return Colors.grey;
       case BrewStepType.stir:
         return Colors.green;
     }
