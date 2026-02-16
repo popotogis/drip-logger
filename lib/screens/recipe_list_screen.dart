@@ -13,6 +13,7 @@ import '../utils/dev_data.dart'; // for generateDummyData
 import 'bean_list_screen.dart';
 import 'recipe_edit_screen.dart';
 import 'pre_brew_adjustment_screen.dart';
+import 'settings/account_settings_screen.dart';
 
 /// レシピ一覧画面 (ホーム画面)
 ///
@@ -176,6 +177,16 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                   );
                 },
                 tooltip: 'Manage Beans',
+              ),
+              IconButton(
+                icon: const Icon(Icons.account_circle),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AccountSettingsScreen(),
+                    ),
+                  );
+                },
               ),
               if (kDebugMode)
                 PopupMenuButton<String>(
