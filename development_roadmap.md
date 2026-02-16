@@ -77,8 +77,8 @@
 - **成果**: Flutterアプリを使いつつ、データがクラウドにある状態を作る。
 
 ### Phase 1: 閲覧用Webアプリ (Next.js)
-- [ ] **Next.jsプロジェクト立ち上げ**: TypeScript, Tailwind CSS, Shadcn/UI。
-- [ ] **データ閲覧**: Firestoreからレシピ一覧を表示する機能のみ実装。
+- [x] **Next.jsプロジェクト立ち上げ**: TypeScript, Tailwind CSS, Shadcn/UI。
+- [x] **データ閲覧**: Firestoreからレシピ一覧を表示する機能のみ実装。
 - **成果**: 「PCの大画面でレシピを見る」といった使い分けが可能になる。
 
 ### Phase 2: 機能移植 (Core Features)
