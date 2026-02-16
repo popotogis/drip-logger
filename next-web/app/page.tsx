@@ -42,7 +42,8 @@ function LoginView() {
       <p className="text-gray-600">Please sign in to view your recipes.</p>
       <button
         onClick={signIn}
-        className="rounded bg-blue-500 px-6 py-2 font-bold text-white hover:bg-blue-600 transition">
+        className="rounded bg-blue-500 px-6 py-2 font-bold text-white hover:bg-blue-600 transition"
+      >
         Sign in with Google
       </button>
     </div>
@@ -69,10 +70,7 @@ function RecipeListView({ uid }: { uid: string }) {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-800">My Recipes</h1>
-          <button
-            onClick={logout}
-            className="text-sm text-gray-500 hover:text-red-500"
-          >
+          <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500">
             Sign out
           </button>
         </div>
@@ -84,21 +82,15 @@ function RecipeListView({ uid }: { uid: string }) {
                 key={recipe.id}
                 className="rounded-lg bg-white p-6 shadow hover:shadow-md transition"
               >
-                <h2 className="mb-2 text-xl font-bold text-gray-900">
-                  {recipe.name}
-                </h2>
+                <h2 className="mb-2 text-xl font-bold text-gray-900">{recipe.name}</h2>
                 <div className="flex items-baseline space-x-2 text-gray-600">
-                  <span className="font-semibold">
-                    {recipe.beanWeightGrams}g
-                  </span>
+                  <span className="font-semibold">{recipe.beanWeightGrams}g</span>
                   <span className="text-sm">beans</span>
                   <span>/</span>
                   <span className="text-sm">water</span>
                 </div>
                 {recipe.note && (
-                  <p className="mt-4 text-sm text-gray-500 line-clamp-2">
-                    {recipe.note}
-                  </p>
+                  <p className="mt-4 text-sm text-gray-500 line-clamp-2">{recipe.note}</p>
                 )}
               </div>
             ))}
