@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../services/auth_service.dart';
 
@@ -47,7 +48,11 @@ class FirestoreRecipeRepository {
 /// Define provider
 final firestoreRecipeRepositoryProvider =
     Provider<FirestoreRecipeRepository>((ref) {
-  final user = ref.watch(authStateProvider).value;
+  // 認証状態の変化を監視してリビルドはさせるが、
+  // 値の取得は同期的に行うことで初期化時のレースコンディションを防ぐ
+  ref.watch(authStateProvider);
+  final user = FirebaseAuth.instance.currentUser;
+
   if (user == null) {
     throw Exception('User is not signed in');
   }

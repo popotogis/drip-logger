@@ -1,3 +1,6 @@
+import 'package:drip_logger/repositories/firestore_recipe_repository.dart';
+import 'package:drip_logger/services/auth_service.dart';
+import 'package:drip_logger/services/data_migration_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // for kDebugMode
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -28,7 +31,51 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
   @override
   void initState() {
     super.initState();
-    _loadRecipes();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    // 匿名ログイン (AuthService)
+    final user = await ref.read(authServiceProvider).signInAnonymously();
+
+    if (user != null) {
+      // データ移行 (DataMigrationService)
+      await ref.read(dataMigrationServiceProvider).migrateIfNeeded();
+
+      // Firestoreから読み込み
+      await _loadRecipesFromFirestore();
+    } else {
+      // ログイン失敗時などは既存のローカル読み込みへフォールバックする等の対応
+      await _loadRecipesLocal();
+    }
+  }
+
+  Future<void> _loadRecipesFromFirestore() async {
+    setState(() => _isLoading = true);
+    try {
+      final recipes =
+          await ref.read(firestoreRecipeRepositoryProvider).loadRecipes();
+      if (mounted) {
+        setState(() {
+          _recipes = recipes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('firestore load failed $e');
+      _loadRecipesLocal();
+    }
+  }
+
+  Future<void> _loadRecipesLocal() async {
+    final repository = ref.read(recipeRepositoryProvider);
+    final recipes = await repository.loadRecipes();
+    if (mounted) {
+      setState(() {
+        _recipes = recipes;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadRecipes() async {
@@ -80,8 +127,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
         );
 
         if (savedRecipe != null) {
-          await ref.read(recipeRepositoryProvider).saveRecipe(savedRecipe);
-          await _loadRecipes();
+          await ref
+              .read(firestoreRecipeRepositoryProvider)
+              .saveRecipe(savedRecipe);
+          await _loadRecipesFromFirestore();
         }
       }
     } else {
@@ -192,7 +241,7 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
                                 _recipes.removeAt(index);
                               });
                               await ref
-                                  .read(recipeRepositoryProvider)
+                                  .read(firestoreRecipeRepositoryProvider)
                                   .deleteRecipe(recipe.id);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -263,8 +312,8 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
     );
 
     if (newRecipe != null && newRecipe is Recipe) {
-      await ref.read(recipeRepositoryProvider).saveRecipe(newRecipe);
-      await _loadRecipes();
+      await ref.read(firestoreRecipeRepositoryProvider).saveRecipe(newRecipe);
+      await _loadRecipesFromFirestore();
     }
   }
 
@@ -278,8 +327,10 @@ class _RecipeListScreenState extends ConsumerState<RecipeListScreen> {
 
     // 抽出フローから戻った場合や編集された場合など、常にリロードして最新のLastUsed順序を反映する
     if (updatedRecipe != null && updatedRecipe is Recipe) {
-      await ref.read(recipeRepositoryProvider).saveRecipe(updatedRecipe);
+      await ref
+          .read(firestoreRecipeRepositoryProvider)
+          .saveRecipe(updatedRecipe);
     }
-    await _loadRecipes();
+    await _loadRecipesFromFirestore();
   }
 }
