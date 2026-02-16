@@ -1,12 +1,17 @@
+import 'package:drip_logger/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'screens/recipe_list_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// アプリの開始地点 (Entry Point)
-void main() {
-  runApp(const ProviderScope(
-    child: CoffeeLoggerApp(),
-  ));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  runApp(const ProviderScope(child: CoffeeLoggerApp()));
 }
 
 /// アプリ全体を表すクラス
