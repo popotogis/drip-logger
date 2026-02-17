@@ -53,12 +53,12 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC23NVZRNsTQByecyemOc_ZrFpjUwWrwC8',
-    appId: '1:875381770447:web:4fb7b0968497a166a68fba',
-    messagingSenderId: '875381770447',
-    projectId: 'drip-logger',
-    authDomain: 'drip-logger.firebaseapp.com',
-    storageBucket: 'drip-logger.firebasestorage.app',
-    measurementId: 'G-82B1VGCCYF',
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+    appId: String.fromEnvironment('FIREBASE_APP_ID'),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID'),
+    projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+    authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
+    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+    measurementId: String.fromEnvironment('FIREBASE_MEASUREMENT_ID'),
   );
 }
