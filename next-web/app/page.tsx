@@ -6,8 +6,9 @@ import { useAuthState } from 'react-firebase-hooks/auth'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { collection, query, orderBy } from 'firebase/firestore'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { deleteRecipe } from '@/lib/recipeUtils'
 
 export default function Home() {
   const [user, loading, error] = useAuthState(auth)
@@ -68,18 +69,35 @@ function RecipeListView({ uid }: { uid: string }) {
     ...doc.data(),
   }))
 
+  const handleDelete = async (e: React.MouseEvent, recipeId: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirm('Are you sure you want to delete this recipe?')) return
+
+    try {
+      await deleteRecipe(uid, recipeId)
+    } catch (err) {
+      console.error(err)
+      alert('Failed to delete')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-800">My Recipes</h1>
           <div className="flex gap-4">
+
+            {/* create new recipe button */}
             <Link href="/recipes/create">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 Create Recipe
               </Button>
             </Link>
+
+            {/* sign out button */}
             <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500">
               Sign out
             </button>
@@ -91,24 +109,33 @@ function RecipeListView({ uid }: { uid: string }) {
             {recipes.map((recipe: any) => (
               <div
                 key={recipe.id}
-                className="rounded-lg bg-white p-6 shadow hover:shadow-md transition"
+                className="relative group rounded-lg bg-white p-6 shadow hover:shadow-md transition"
               >
-                <h2 className="mb-2 text-xl font-bold text-gray-900">{recipe.name}</h2>
-                <div className="flex items-baseline space-x-2 text-gray-600">
-                  <span className="font-semibold">{recipe.beanWeightGrams}g</span>
-                  <span className="text-sm">beans</span>
-                  <span>/</span>
-                  <span className="text-sm">water</span>
-                </div>
-                {recipe.note && (
-                  <p className="mt-4 text-sm text-gray-500 line-clamp-2">{recipe.note}</p>
-                )}
+                {/* recipe card */}
+                <Link href={`/recipes/edit?id=${recipe.id}`} className="block">
+                  <h2 className="mb-2 text-xl font-bold text-gray-900">{recipe.name}</h2>
+                  <div className="flex items-baseline space-x-2 text-gray-600">
+                    <span className="text-sm">beans: {recipe.beanWeightGrams}g</span>
+                    <span>/</span>
+                    <span className="text-sm">water: {recipe.totalWaterAmount}ml</span>
+                  </div>
+                  {recipe.note && (
+                    <p className="mt-4 text-sm text-gray-500 line-clamp-2">{recipe.note}</p>
+                  )}
+                </Link>
+
+                {/* delete button */}
+                <button
+                  onClick={(e) => handleDelete(e, recipe.id)}
+                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             ))}
           </div>
         ) : (
           <div className="text-center text-gray-500">
-            <p>No recipes found.</p>
             <p>No recipes found.</p>
             <p className="text-sm mb-4">Create your first recipe!</p>
             <Link href="/recipes/create">

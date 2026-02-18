@@ -5,6 +5,7 @@ import {
     doc,
     setDoc,
     getDoc,
+    deleteDoc,
     DocumentData,
     FirestoreDataConverter,
     QueryDocumentSnapshot,
@@ -85,4 +86,10 @@ export async function getRecipe(uid: string, recipeId: string): Promise<Recipe |
     const docRef = doc(db, 'users', uid, 'recipes', recipeId).withConverter(recipeConverter)
     const snap = await getDoc(docRef)
     return snap.exists() ? snap.data() : null
+}
+
+// delete recipe
+export async function deleteRecipe(uid: string, recipeId: string): Promise<void> {
+    const docRef = doc(db, 'users', uid, 'recipes', recipeId).withConverter(recipeConverter)
+    await deleteDoc(docRef)
 }
