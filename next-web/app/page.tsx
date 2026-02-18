@@ -6,7 +6,7 @@ import { useAuthState } from 'react-firebase-hooks/auth'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { collection, query, orderBy } from 'firebase/firestore'
 import Link from 'next/link'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Timer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { deleteRecipe } from '@/lib/recipeUtils'
 
@@ -122,6 +122,14 @@ function RecipeListView({ uid }: { uid: string }) {
                   {recipe.note && (
                     <p className="mt-4 text-sm text-gray-500 line-clamp-2">{recipe.note}</p>
                   )}
+                </Link>
+
+                {/* timer button */}
+                <Link
+                  href={`/recipes/timer?id=${recipe.id}`}
+                  className="absolute bottom-4 right-4 p-2 text-blue-500 hover:text-blue-700 bg-blue-50 rounded-full opacity-0 group-hover:opacity-100 transition"
+                >
+                  <Timer className="h-5 w-5" />
                 </Link>
 
                 {/* delete button */}
