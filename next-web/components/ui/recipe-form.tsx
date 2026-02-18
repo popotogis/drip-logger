@@ -49,6 +49,7 @@ export function RecipeForm({
     isSubmitting = false,
 }: RecipeFormProps) {
     // Explicitly type DefaultValues to match RecipeFormValues
+    // We need to ensure that the types match exactly 
     const initialValues: DefaultValues<RecipeFormValues> = {
         name: defaultValues?.name || '',
         beanWeightGrams: defaultValues?.beanWeightGrams || 15,
@@ -59,8 +60,8 @@ export function RecipeForm({
         temperature: defaultValues?.temperature,
         note: defaultValues?.note || '',
         steps: defaultValues?.steps?.map(s => ({
-            waterAmount: s.waterAmount,
-            waitTime: s.waitTime
+            waterAmount: Number(s.waterAmount),
+            waitTime: Number(s.waitTime)
         })) || [],
     }
 

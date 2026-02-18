@@ -2,16 +2,27 @@
 
 import { RecipeForm } from '@/components/ui/recipe-form'
 import { useRouter } from 'next/navigation'
+import { auth } from '@/lib/firebase'
+import { useAuthState } from 'react-firebase-hooks/auth'
+import { createRecipe } from '@/lib/recipeUtils'
 
 export default function CreateRecipePage() {
     const router = useRouter()
+    const [user] = useAuthState(auth)
 
     const handleSubmit = async (data: any) => {
-        console.log('Submitted data:', data)
-        alert('Recipe data checked in console! (Saving not implemented yet)')
-        // TODO: Implement Firestore saving logic
-        // await createRecipe(data)
-        // router.push('/')
+        // check isLogin
+        if (!user) {
+            alert('You must be logged in to create a recipe.')
+            return
+        }
+        try {
+            await createRecipe(user.uid, data)
+            router.push('/')
+        } catch (e) {
+            console.error(e)
+            alert('Failed to save recipe')
+        }
     }
 
     return (

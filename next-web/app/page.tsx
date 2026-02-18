@@ -5,6 +5,9 @@ import { auth, db } from '@/lib/firebase'
 import { useAuthState } from 'react-firebase-hooks/auth'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { collection, query, orderBy } from 'firebase/firestore'
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function Home() {
   const [user, loading, error] = useAuthState(auth)
@@ -70,9 +73,17 @@ function RecipeListView({ uid }: { uid: string }) {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-800">My Recipes</h1>
-          <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500">
-            Sign out
-          </button>
+          <div className="flex gap-4">
+            <Link href="/recipes/create">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Recipe
+              </Button>
+            </Link>
+            <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500">
+              Sign out
+            </button>
+          </div>
         </div>
 
         {recipes && recipes.length > 0 ? (
@@ -98,7 +109,14 @@ function RecipeListView({ uid }: { uid: string }) {
         ) : (
           <div className="text-center text-gray-500">
             <p>No recipes found.</p>
-            <p className="text-sm">Create recipes in the Flutter app first.</p>
+            <p>No recipes found.</p>
+            <p className="text-sm mb-4">Create your first recipe!</p>
+            <Link href="/recipes/create">
+              <Button variant="outline">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Recipe
+              </Button>
+            </Link>
           </div>
         )}
       </div>

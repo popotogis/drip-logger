@@ -1,5 +1,17 @@
 import { Recipe } from '@/types/recipe'
-import { DocumentData, FirestoreDataConverter, QueryDocumentSnapshot, SnapshotOptions } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import {
+    collection,
+    doc,
+    setDoc,
+    getDoc,
+    DocumentData,
+    FirestoreDataConverter,
+    QueryDocumentSnapshot,
+    SnapshotOptions,
+    CollectionReference
+} from 'firebase/firestore'
+import { sign } from 'crypto'
 
 export const recipeConverter: FirestoreDataConverter<Recipe> = {
     toFirestore(recipe: Recipe): DocumentData {
@@ -12,7 +24,7 @@ export const recipeConverter: FirestoreDataConverter<Recipe> = {
             dripper: recipe.dripper || null,
             filter: recipe.filter || null,
             temperature: recipe.temperature || null,
-            totalWaterAmount: recipe.totalWaterAmount,
+            totalWaterAmount: recipe.totalWaterAmount || recipe.steps.reduce((acc, step) => acc + (Number(step.waterAmount) || 0), 0),
             note: recipe.note || null,
             steps: recipe.steps.map((step) => ({
                 waterAmount: step.waterAmount,
@@ -46,4 +58,31 @@ export const recipeConverter: FirestoreDataConverter<Recipe> = {
             lastUsed: data.lastUsed || new Date().toISOString(),
         }
     }
+}
+
+export async function createRecipe(uid: string, recipeData: Omit<Recipe, 'id' | 'lastUsed'>)
+    : Promise<string> {
+    const colRef = collection(db, 'users', uid, 'recipes').withConverter(recipeConverter)
+    const docRef = doc(colRef)
+    const newRecipe: Recipe = {
+        ...recipeData,
+        id: docRef.id,
+        lastUsed: new Date().toISOString()
+    }
+    await setDoc(docRef, newRecipe)
+    return docRef.id
+}
+
+export async function updateRecipe(uid: string, recipe: Recipe): Promise<void> {
+    const docRef = doc(db, 'users', uid, 'recipes', recipe.id).withConverter(recipeConverter)
+    await setDoc(docRef, {
+        ...recipe,
+        lastUsed: new Date().toISOString()
+    })
+}
+
+export async function getRecipe(uid: string, recipeId: string): Promise<Recipe | null> {
+    const docRef = doc(db, 'users', uid, 'recipes', recipeId).withConverter(recipeConverter)
+    const snap = await getDoc(docRef)
+    return snap.exists() ? snap.data() : null
 }
