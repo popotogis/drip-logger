@@ -2,8 +2,10 @@
 
 import { useFieldArray, useForm, DefaultValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useState } from 'react'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import {
     Form,
     FormControl,
@@ -75,10 +77,12 @@ export function RecipeForm({
         mode: 'onChange',
     })
 
-    const { fields, append, remove } = useFieldArray({
+    const { fields, append, remove, replace } = useFieldArray({
         control: form.control,
         name: 'steps',
     })
+
+    const [isRatioLocked, setIsRatioLocked] = useState(true)
 
     const steps = form.watch('steps')
     const beanWeight = form.watch('beanWeightGrams')
@@ -141,9 +145,44 @@ export function RecipeForm({
                                     name="beanWeightGrams"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Beans (g)</FormLabel>
+                                            <div className="flex items-center justify-between">
+                                                <FormLabel>Beans (g)</FormLabel>
+                                                <div className="flex items-center space-x-2">
+                                                    <Switch
+                                                        checked={isRatioLocked}
+                                                        onCheckedChange={setIsRatioLocked}
+                                                        id="ratio-lock"
+                                                    />
+                                                    <label htmlFor="ratio-lock" className="text-xs text-muted-foreground cursor-pointer">
+                                                        Lock Ratio
+                                                    </label>
+                                                </div>
+                                            </div>
                                             <FormControl>
-                                                <Input type="number" step="0.1" {...field} />
+                                                <Input
+                                                    type="number"
+                                                    step="0.1"
+                                                    {...field}
+                                                    onChange={(e) => {
+                                                        const newValue = parseFloat(e.target.value)
+                                                        const oldValue = Number(field.value) // Ensure it's a number
+
+                                                        // Update the field first
+                                                        field.onChange(e)
+
+                                                        if (isRatioLocked && oldValue > 0 && !isNaN(newValue) && newValue > 0) {
+                                                            const ratio = newValue / oldValue
+                                                            const currentSteps = form.getValues('steps') || []
+                                                            const newSteps = currentSteps.map(step => ({
+                                                                ...step,
+                                                                waterAmount: Math.round(Number(step.waterAmount) * ratio)
+                                                            }))
+                                                            // Use replace from useFieldArray for better performance and correctness
+                                                            // form.setValue('steps', newSteps) is not recommended for Field Arrays
+                                                            replace(newSteps)
+                                                        }
+                                                    }}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
