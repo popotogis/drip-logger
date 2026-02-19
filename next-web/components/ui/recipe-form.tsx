@@ -354,17 +354,17 @@ export function RecipeForm({
                     </Card>
                 </Collapsible>
 
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                     {onSaveAsCopy && (
                         <Button type="button" variant="ghost" onClick={form.handleSubmit(onSaveAsCopy)} disabled={isSubmitting}>
-                            Save as New
+                            Copy
                         </Button>
                     )}
                     <Button type="submit" variant="secondary" disabled={isSubmitting}>
-                        {isSubmitting ? 'Saving...' : 'Save (Update)'}
+                        {isSubmitting ? 'Saving...' : (onSaveAsCopy ? 'Update' : 'Save')}
                     </Button>
                     {onStartBrewing && (
-                        <Button type="button" size="lg" className="font-bold flex-1 md:flex-none" onClick={form.handleSubmit(onStartBrewing)} disabled={isSubmitting}>
+                        <Button type="button" size="lg" className="font-bold flex-1 md:flex-none min-w-[140px]" onClick={form.handleSubmit(onStartBrewing)} disabled={isSubmitting}>
                             Start Brewing
                         </Button>
                     )}
