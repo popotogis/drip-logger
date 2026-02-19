@@ -89,4 +89,4 @@
 
 ### Phase 3: 完全移行 (Shutdown Flutter)
 - [x] **全機能のWeb化**: 履歴、豆管理、分析など残り機能を移植。
-- [ ] **Flutterアプリ終了**: Webアプリ一本に統合。
+- [x] **Flutterアプリ終了**: Webアプリ一本に統合。
