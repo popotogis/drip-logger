@@ -156,7 +156,7 @@ function RecipeListView({ uid }: { uid: string }) {
 
       {/* Floating Action Button for Beans */}
       <Link href="/beans" className="fixed bottom-6 right-6 shadow-lg z-50 rounded-full">
-        <Button size="lg" className="rounded-full h-14 w-14 p-0 bg-amber-800 hover:bg-amber-900 text-white">
+        <Button size="lg" className="rounded-full h-14 w-14 p-0 bg-black hover:bg-gray-800 text-white">
           <Coffee className="h-6 w-6" />
           <span className="sr-only">Beans</span>
         </Button>

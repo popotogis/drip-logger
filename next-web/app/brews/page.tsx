@@ -10,11 +10,13 @@ import { createRecipe, getRecipe } from '@/lib/recipeUtils'
 import { BrewResult } from '@/types/brewResult'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft, Copy, Download, Home } from 'lucide-react'
+import { ArrowLeft, Copy, Download, Home, Plus } from 'lucide-react'
 import Link from 'next/link'
-import { getBeans } from '@/lib/beanUtils'
+import { getBeans, createBean } from '@/lib/beanUtils'
 import { Bean } from '@/types/bean'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { BeanForm } from '@/components/ui/bean-form'
 
 export default function BrewResultPage() {
     return (
@@ -35,6 +37,7 @@ function BrewResultContent() {
     const [isSaving, setIsSaving] = useState(false)
     const [isRecipeModified, setIsRecipeModified] = useState(false)
     const [isRecipeSaved, setIsRecipeSaved] = useState(false) // Track if user saved the recipe manually in this session
+    const [isBeanDialogOpen, setIsBeanDialogOpen] = useState(false)
     const router = useRouter()
 
     useEffect(() => {
@@ -147,6 +150,22 @@ function BrewResultContent() {
         }
     }
 
+    const handleCreateBean = async (data: any) => {
+        if (!user) return
+        try {
+            const newBeanId = await createBean(user.uid, data)
+            // Refresh beans and select the new one
+            const newBeans = await getBeans(user.uid)
+            setBeans(newBeans)
+            setSelectedBeanId(newBeanId)
+            setIsBeanDialogOpen(false)
+            alert('Bean created successfully!')
+        } catch (e) {
+            console.error(e)
+            alert('Failed to create bean')
+        }
+    }
+
     const isDirty = isRecipeModified && !isRecipeSaved
 
     const handleHomeClick = (e: React.MouseEvent) => {
@@ -184,18 +203,36 @@ function BrewResultContent() {
                 {/* Bean Selection */}
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Select Bean <span className="text-red-500">*</span></label>
-                    <Select value={selectedBeanId} onValueChange={setSelectedBeanId}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a bean..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {beans.map(bean => (
-                                <SelectItem key={bean.id} value={bean.id}>
-                                    {bean.name} ({bean.roaster})
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <div className="flex gap-2">
+                        <Select value={selectedBeanId} onValueChange={setSelectedBeanId}>
+                            <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Select a bean..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {beans.map(bean => (
+                                    <SelectItem key={bean.id} value={bean.id}>
+                                        {bean.name} ({bean.roaster})
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Dialog open={isBeanDialogOpen} onOpenChange={setIsBeanDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-10 px-3">
+                                    <Plus className="mr-1 h-4 w-4" />
+                                    New
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
+                                <DialogHeader>
+                                    <DialogTitle>Add New Bean</DialogTitle>
+                                </DialogHeader>
+                                <div className="py-4">
+                                    <BeanForm onSubmit={handleCreateBean} />
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
                 {/* Notes */}
                 <div className="space-y-2">
