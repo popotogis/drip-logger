@@ -6,7 +6,7 @@ import { useAuthState } from 'react-firebase-hooks/auth'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { collection, query, orderBy } from 'firebase/firestore'
 import Link from 'next/link'
-import { Plus, Trash2, Timer } from 'lucide-react'
+import { Plus, Trash2, Timer, Coffee } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { deleteRecipe } from '@/lib/recipeUtils'
 
@@ -86,14 +86,22 @@ function RecipeListView({ uid }: { uid: string }) {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-800">My Recipes</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Recipes</h1>
           <div className="flex gap-4">
 
             {/* create new recipe button */}
             <Link href="/recipes/create">
               <Button>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-0 h-4 w-4" />
                 Create Recipe
+              </Button>
+            </Link>
+
+            {/* manage beans button */}
+            <Link href="/beans">
+              <Button variant="outline">
+                <Coffee className="mr-2 h-4 w-4" />
+                Manage Beans
               </Button>
             </Link>
 
