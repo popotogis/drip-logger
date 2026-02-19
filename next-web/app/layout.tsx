@@ -34,8 +34,6 @@ export const viewport = {
   themeColor: '#ffffff',
 }
 
-import { BottomNav } from '@/components/layout/BottomNav'
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,7 +43,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased pb-20`}>
         {children}
-        <BottomNav />
       </body>
     </html>
   )
