@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { useAuthState } from 'react-firebase-hooks/auth'
-import { getRecipe, updateRecipe } from '@/lib/recipeUtils'
+import { getRecipe, updateRecipe, createRecipe } from '@/lib/recipeUtils'
 import { RecipeForm } from '@/components/ui/recipe-form'
 import { Recipe } from '@/types/recipe'
 
@@ -40,6 +40,34 @@ function EditRecipeContent() {
         }
     }
 
+    const handleStartBrewing = (data: any) => {
+        // Create a temporary recipe object
+        const tempRecipe = { ...data, id: id || 'temp' }
+        // Encode the recipe to base64
+        const encodedRecipe = btoa(encodeURIComponent(JSON.stringify(tempRecipe)))
+        // Navigate to the timer page with the encoded recipe
+        router.push(`/recipes/timer?encoded=${encodedRecipe}`)
+    }
+
+    const handleSaveAsCopy = async (data: any) => {
+        if (!user) return
+        try {
+            // Create a new recipe without ID (Firestore will generate one)
+            // We strip the ID here by destructuring
+            const { id: _, ...recipeData } = data
+            await createRecipe(user.uid, {
+                ...recipeData,
+                name: `${data.name} (Copy)`,
+                lastUsed: new Date().toISOString()
+            })
+            alert('Recipe copied successfully!')
+            router.push('/')
+        } catch (e) {
+            console.error(e)
+            alert('Failed to copy recipe')
+        }
+    }
+
     if (loading || isLoadingRecipe) return <div>Loading...</div>
     if (!id) return <div>Recipe ID is missing.</div>
     if (!recipe) return <div>Recipe not found.</div>
@@ -47,7 +75,12 @@ function EditRecipeContent() {
     return (
         <div className="container mx-auto py-10">
             <h1 className="text-3xl font-bold mb-8">Edit Recipe</h1>
-            <RecipeForm defaultValues={recipe} onSubmit={handleSubmit} />
+            <RecipeForm
+                defaultValues={recipe}
+                onSubmit={handleSubmit}
+                onStartBrewing={handleStartBrewing}
+                onSaveAsCopy={handleSaveAsCopy}
+            />
         </div>
     )
 }

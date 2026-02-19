@@ -7,7 +7,7 @@ import { Bean } from '@/types/bean'
 import { getBeans, deleteBean } from '@/lib/beanUtils'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { Plus, Trash2, Edit } from 'lucide-react'
+import { Plus, Trash2, Edit, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function BeanListPage() {
@@ -39,7 +39,14 @@ export default function BeanListPage() {
     return (
         <div className="container mx-auto py-10 px-4">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Beans</h1>
+                <div className="flex items-center gap-4">
+                    <Link href="/">
+                        <Button variant="ghost" size="icon">
+                            <ArrowLeft className="h-6 w-6" />
+                        </Button>
+                    </Link>
+                    <h1 className="text-3xl font-bold">Beans</h1>
+                </div>
                 <Link href="/beans/create">
                     <Button>
                         <Plus className="mr-2 h-4 w-4" />

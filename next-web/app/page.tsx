@@ -132,13 +132,7 @@ function RecipeListView({ uid }: { uid: string }) {
                   )}
                 </Link>
 
-                {/* timer button */}
-                <Link
-                  href={`/recipes/timer?id=${recipe.id}`}
-                  className="absolute bottom-4 right-4 p-2 text-blue-500 hover:text-blue-700 bg-blue-50 rounded-full opacity-0 group-hover:opacity-100 transition"
-                >
-                  <Timer className="h-5 w-5" />
-                </Link>
+
 
                 {/* delete button */}
                 <button

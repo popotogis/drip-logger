@@ -40,12 +40,16 @@ type RecipeFormValues = z.infer<typeof recipeSchema>
 interface RecipeFormProps {
     defaultValues?: Partial<RecipeFormValues>
     onSubmit: (data: RecipeFormValues) => void
+    onStartBrewing?: (data: RecipeFormValues) => void
+    onSaveAsCopy?: (data: RecipeFormValues) => void
     isSubmitting?: boolean
 }
 
 export function RecipeForm({
     defaultValues,
     onSubmit,
+    onStartBrewing,
+    onSaveAsCopy,
     isSubmitting = false,
 }: RecipeFormProps) {
     // Explicitly type DefaultValues to match RecipeFormValues
@@ -66,7 +70,7 @@ export function RecipeForm({
     }
 
     const form = useForm<RecipeFormValues>({
-        resolver: zodResolver(recipeSchema),
+        resolver: zodResolver(recipeSchema) as any,
         defaultValues: initialValues,
         mode: 'onChange',
     })
@@ -289,10 +293,20 @@ export function RecipeForm({
                     </CardContent>
                 </Card>
 
-                <div className="flex justify-end">
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Saving...' : 'Save Recipe'}
+                <div className="flex justify-end gap-2">
+                    {onSaveAsCopy && (
+                        <Button type="button" variant="ghost" onClick={form.handleSubmit(onSaveAsCopy)} disabled={isSubmitting}>
+                            Save as New
+                        </Button>
+                    )}
+                    <Button type="submit" variant="secondary" disabled={isSubmitting}>
+                        {isSubmitting ? 'Saving...' : 'Save (Update)'}
                     </Button>
+                    {onStartBrewing && (
+                        <Button type="button" size="lg" className="font-bold flex-1 md:flex-none" onClick={form.handleSubmit(onStartBrewing)} disabled={isSubmitting}>
+                            Start Brewing
+                        </Button>
+                    )}
                 </div>
             </form>
         </Form>

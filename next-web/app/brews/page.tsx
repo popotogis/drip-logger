@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { auth } from '@/lib/firebase'
 import { useAuthState } from 'react-firebase-hooks/auth'
 import { getBrewResult, updateBrewResult, generateMarkdown } from '@/lib/brewResultUtils'
+import { createRecipe } from '@/lib/recipeUtils'
 import { BrewResult } from '@/types/brewResult'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -95,6 +96,22 @@ function BrewResultContent() {
             URL.revokeObjectURL(url)
         }
     }
+
+    const handleSaveRecipe = async () => {
+        if (!user || !result) return
+        try {
+            const { id: _, ...recipeData } = result.recipe
+            await createRecipe(user.uid, {
+                ...recipeData,
+                name: `${result.recipe.name} (from Brew)`
+            })
+            alert('Recipe saved successfully!')
+        } catch (e) {
+            console.error(e)
+            alert('Failed to save recipe')
+        }
+    }
+
     if (loading || !result) return <div className="p-8">Loading...</div>
     return (
         <div className="container mx-auto py-10 px-4 max-w-3xl">
@@ -178,6 +195,9 @@ function BrewResultContent() {
                             </tbody>
                         </table>
                     </div>
+                    <Button onClick={handleSaveRecipe} variant="secondary" className="w-full">
+                        Save Recipe
+                    </Button>
                 </div>
                 {/* Actions */}
                 <div className="flex flex-col gap-3 pt-4">

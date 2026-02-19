@@ -14,12 +14,24 @@ import Link from 'next/link'
 function TimerPageContent() {
     const searchParams = useSearchParams()
     const id = searchParams.get('id')
+    const encoded = searchParams.get('encoded')
     const [user, loading] = useAuthState(auth)
     const [recipe, setRecipe] = useState<Recipe | null>(null)
     const [isLoadingRecipe, setIsLoadingRecipe] = useState(true)
 
     useEffect(() => {
         const fetchRecipe = async () => {
+            if (encoded) {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(atob(encoded)))
+                    setRecipe(decoded)
+                    setIsLoadingRecipe(false)
+                    return
+                } catch (e) {
+                    console.error('Failed to decode recipe', e)
+                }
+            }
+
             if (user && id) {
                 const fetched = await getRecipe(user.uid, id)
                 setRecipe(fetched)
@@ -29,10 +41,10 @@ function TimerPageContent() {
             }
         }
         if (!loading) fetchRecipe()
-    }, [user, id, loading])
+    }, [user, id, encoded, loading])
 
     if (loading || isLoadingRecipe) return <div className="p-10">Loading...</div>
-    if (!id) return <div className="p-10">Recipe ID is missing.</div>
+    if (!id && !encoded && !recipe) return <div className="p-10">Recipe ID or valid data is missing.</div>
     if (!recipe) return <div className="p-10">Recipe not found.</div>
 
     return (
