@@ -1,15 +1,26 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import * as WorkerTimers from 'worker-timers'
 import { Recipe } from '@/types/recipe'
+import { record } from 'zod'
+
+export interface TimerStepResult {
+    stepIndex: number
+    plannedTime: number
+    actualTime: number
+    waterAmount: number
+}
 
 export const useDripTimer = (recipe: Recipe) => {
     const [elapsedTime, setElapsedTime] = useState(0)
     const [stepElapsedTime, setStepElapsedTime] = useState(0)
     const [currentStepIndex, setCurrentStepIndex] = useState(0)
     const [isActive, setIsActive] = useState(false)
+    const [stepResults, setStepResults] = useState<TimerStepResult[]>([])
+
     const timerRef = useRef<number | null>(null)
     const currentStep = recipe.steps[currentStepIndex]
     const isLastStep = currentStepIndex === recipe.steps.length - 1
+
     const tick = useCallback(() => {
         setElapsedTime(prev => prev + 1)
         setStepElapsedTime(prev => prev + 1)
@@ -30,20 +41,36 @@ export const useDripTimer = (recipe: Recipe) => {
         }
     }, [isActive])
 
+    const recordCurrentStep = useCallback(() => {
+        setStepResults(prev => {
+            if (prev.some(r => r.stepIndex === currentStepIndex)) return prev
+
+            return [...prev, {
+                stepIndex: currentStepIndex,
+                plannedTime: currentStep.waitTime,
+                actualTime: stepElapsedTime,
+                waterAmount: currentStep.waterAmount
+            }]
+        })
+    }, [currentStepIndex, currentStep, stepElapsedTime])
+
     const nextStep = useCallback(() => {
+        recordCurrentStep()
+
         if (!isLastStep) {
             setCurrentStepIndex(prev => prev + 1)
             setStepElapsedTime(0)
         } else {
             pause()
         }
-    }, [isLastStep, pause])
+    }, [isLastStep, pause, recordCurrentStep])
 
     const reset = useCallback(() => {
         pause()
         setElapsedTime(0)
         setStepElapsedTime(0)
         setCurrentStepIndex(0)
+        setStepResults([])
     }, [pause])
 
     useEffect(() => {
@@ -61,6 +88,7 @@ export const useDripTimer = (recipe: Recipe) => {
         currentStep,
         isActive,
         isLastStep,
+        stepResults,
         start,
         pause,
         reset,

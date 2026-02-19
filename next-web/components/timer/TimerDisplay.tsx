@@ -2,6 +2,14 @@ import { Button } from '@/components/ui/button'
 import { Play, Pause, SkipForward, RotateCcw } from 'lucide-react'
 import { Recipe } from '@/types/recipe'
 import { useDripTimer } from '@/hooks/useDripTimer'
+import { useRouter } from 'next/navigation'
+import { auth, db } from '@/lib/firebase'
+import { useAuthState } from 'react-firebase-hooks/auth'
+import { createBrewResult } from '@/lib/brewResultUtils'
+import { BrewResult } from '@/types/brewResult'
+import { Timestamp, doc, collection } from 'firebase/firestore'
+import { Check } from 'lucide-react'
+import { useState } from 'react'
 
 const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0')
@@ -10,6 +18,10 @@ const formatTime = (seconds: number) => {
 }
 
 export const TimerDisplay = ({ recipe }: { recipe: Recipe }) => {
+    const router = useRouter()
+    const [user] = useAuthState(auth)
+    const [isSaving, setIsSaving] = useState(false)
+
     const {
         elapsedTime,
         stepElapsedTime,
@@ -17,6 +29,7 @@ export const TimerDisplay = ({ recipe }: { recipe: Recipe }) => {
         currentStep,
         isActive,
         isLastStep,
+        stepResults,
         start,
         pause,
         reset,
@@ -24,6 +37,35 @@ export const TimerDisplay = ({ recipe }: { recipe: Recipe }) => {
     } = useDripTimer(recipe)
 
     const progress = Math.min((stepElapsedTime / currentStep.waitTime) * 100, 100)
+
+    const handleFinish = async () => {
+        if (!user) return
+        setIsSaving(true)
+
+        const finalStepResult = {
+            stepIndex: currentStepIndex,
+            plannedTime: currentStep.waitTime,
+            actualTime: stepElapsedTime,
+            waterAmount: currentStep.waterAmount
+        }
+
+        const allSteps = [...stepResults, finalStepResult]
+        const brewResult: BrewResult = {
+            id: doc(collection(db, 'dummy')).id,
+            recipe: recipe,
+            brewedAt: Timestamp.now(),
+            totalTimeMs: elapsedTime * 1000,
+            notes: '',
+            steps: allSteps.map(s => ({
+                stepIndex: s.stepIndex,
+                plannedTimeMs: s.plannedTime * 1000,
+                actualTimeMs: s.actualTime * 1000,
+                waterAmount: s.waterAmount,
+            }))
+        }
+        await createBrewResult(user.uid, brewResult)
+        router.push(`/brews?id=${brewResult.id}`)
+    }
 
     // Calculate cumulative water amount up to current step
     const targetWaterAmount = recipe.steps
@@ -79,23 +121,24 @@ export const TimerDisplay = ({ recipe }: { recipe: Recipe }) => {
             </div>
 
             {/* operation button */}
+            {/* operation button */}
             <div className="flex gap-4">
-                <Button variant="outline" size="icon" onClick={reset}>
-                    <RotateCcw className="h-6 w-6" />
-                </Button>
-
+                {/* ... Reset Button ... */}
                 <Button
                     size="lg"
-                    className="w-24 h-24 rounded-full"
-                    onClick={!isActive ? start : nextStep}
-                    disabled={isLastStep && isActive}
+                    className={`w-24 h-24 rounded-full ${isLastStep ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                    onClick={!isActive ? start : (isLastStep ? handleFinish : nextStep)}
+                    disabled={isSaving}
                 >
-                    {!isActive ? <Play className="h-10 w-10 ml-1" /> : <SkipForward className="h-10 w-10" />}
+                    {!isActive ? (
+                        <Play className="h-10 w-10 ml-1" />
+                    ) : isLastStep ? (
+                        <Check className="h-10 w-10" />
+                    ) : (
+                        <SkipForward className="h-10 w-10" />
+                    )}
                 </Button>
-
-                <Button variant="outline" size="icon" onClick={isActive ? pause : undefined} disabled={!isActive} className="opacity-50">
-                    <Pause className="h-6 w-6" />
-                </Button>
+                {/* ... Pause Button ... */}
             </div>
         </div>
     )
