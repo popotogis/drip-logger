@@ -68,19 +68,21 @@ function EditRecipeContent() {
         }
     }
 
-    if (loading || isLoadingRecipe) return <div>Loading...</div>
-    if (!id) return <div>Recipe ID is missing.</div>
-    if (!recipe) return <div>Recipe not found.</div>
+    if (loading || isLoadingRecipe) return <div className="p-8">Loading...</div>
+    if (!id) return <div className="p-8">Recipe ID is missing.</div>
+    if (!recipe) return <div className="p-8">Recipe not found.</div>
 
     return (
-        <div className="container mx-auto py-10">
-            <h1 className="text-3xl font-bold mb-8">Edit Recipe</h1>
-            <RecipeForm
-                defaultValues={recipe}
-                onSubmit={handleSubmit}
-                onStartBrewing={handleStartBrewing}
-                onSaveAsCopy={handleSaveAsCopy}
-            />
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+            <div className="mx-auto max-w-4xl">
+                <h1 className="text-3xl font-bold mb-8 text-gray-800">Edit Recipe</h1>
+                <RecipeForm
+                    defaultValues={recipe}
+                    onSubmit={handleSubmit}
+                    onStartBrewing={handleStartBrewing}
+                    onSaveAsCopy={handleSaveAsCopy}
+                />
+            </div>
         </div>
     )
 }

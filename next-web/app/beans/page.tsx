@@ -37,44 +37,54 @@ export default function BeanListPage() {
     if (!user) return <div className="p-8">Please sign in.</div>
 
     return (
-        <div className="container mx-auto py-10 px-4">
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
-                    <Link href="/">
-                        <Button variant="ghost" size="icon">
-                            <ArrowLeft className="h-6 w-6" />
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+            <div className="mx-auto max-w-4xl">
+                <div className="mb-8 flex items-center justify-between">
+                    <h1 className="text-3xl font-bold text-gray-800">Beans</h1>
+                    <Link href="/beans/create">
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add Bean
                         </Button>
                     </Link>
-                    <h1 className="text-3xl font-bold">Beans</h1>
                 </div>
-                <Link href="/beans/create">
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Bean
-                    </Button>
-                </Link>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
-                {beans.map(bean => (
-                    <Link href={`/beans/edit?id=${bean.id}`} key={bean.id} className="block group relative">
-                        <div className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition">
-                            <h2 className="text-xl font-bold mb-1">{bean.name}</h2>
-                            <p className="text-sm text-gray-500 mb-2">{bean.roaster}</p>
-                            <div className="text-sm space-y-1">
-                                {bean.origin && <p>Origin: {bean.origin}</p>}
-                                <p>Roast: {bean.roastLevel}</p>
-                            </div>
+                {beans && beans.length > 0 ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {beans.map(bean => (
+                            <Link href={`/beans/edit?id=${bean.id}`} key={bean.id} className="block group relative">
+                                <div className="rounded-lg bg-white p-6 shadow-sm border border-gray-100 active:border-blue-500 transition-colors">
+                                    <h2 className="text-xl font-bold mb-1 text-gray-900">{bean.name}</h2>
+                                    <p className="text-sm text-gray-500 mb-2">{bean.roaster}</p>
+                                    <div className="text-sm space-y-1 text-gray-600">
+                                        {bean.origin && <p>Origin: {bean.origin}</p>}
+                                        <p>Roast: {bean.roastLevel}</p>
+                                    </div>
 
-                            {/* actions */}
-                            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition flex gap-2">
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-gray-400 hover:text-red-500" onClick={(e) => handleDelete(e, bean.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                    </Link>
-                ))}
+                                    {/* actions - Align with Home Page style */}
+                                    <button
+                                        onClick={(e) => handleDelete(e, bean.id)}
+                                        className="absolute top-4 right-4 p-3 text-gray-300 hover:text-red-500 transition-colors"
+                                        aria-label="Delete bean"
+                                    >
+                                        <Trash2 className="h-5 w-5" />
+                                    </button>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center text-gray-500 mt-20">
+                        <p>No beans found.</p>
+                        <p className="text-sm mb-4">Add your first bean!</p>
+                        <Link href="/beans/create">
+                            <Button variant="outline">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Bean
+                            </Button>
+                        </Link>
+                    </div>
+                )}
             </div>
         </div>
     )

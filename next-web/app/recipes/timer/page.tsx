@@ -20,6 +20,33 @@ function TimerPageContent() {
     const [isLoadingRecipe, setIsLoadingRecipe] = useState(true)
 
     useEffect(() => {
+        // Wake Lock
+        let wakeLock: WakeLockSentinel | null = null;
+        const requestWakeLock = async () => {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (err: any) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        };
+        requestWakeLock();
+
+        const handleVisibilityChange = () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                requestWakeLock();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            if (wakeLock) wakeLock.release();
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, []);
+
+    useEffect(() => {
         const fetchRecipe = async () => {
             if (encoded) {
                 try {

@@ -83,7 +83,7 @@ function RecipeListView({ uid }: { uid: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-800">Recipes</h1>
@@ -97,13 +97,8 @@ function RecipeListView({ uid }: { uid: string }) {
               </Button>
             </Link>
 
-            {/* manage beans button */}
-            <Link href="/beans">
-              <Button variant="outline">
-                <Coffee className="mr-2 h-4 w-4" />
-                Manage Beans
-              </Button>
-            </Link>
+            {/* manage beans button - Removed as it is in Bottom Nav */}
+            {/* <Link href="/beans"> ... </Link> */}
 
             {/* sign out button */}
             <button onClick={logout} className="text-sm text-gray-500 hover:text-red-500">
@@ -117,7 +112,7 @@ function RecipeListView({ uid }: { uid: string }) {
             {recipes.map((recipe: any) => (
               <div
                 key={recipe.id}
-                className="relative group rounded-lg bg-white p-6 shadow hover:shadow-md transition"
+                className="relative group rounded-lg bg-white p-6 shadow-sm border border-gray-100 active:border-blue-500 transition-colors" // Added active state
               >
                 {/* recipe card */}
                 <Link href={`/recipes/edit?id=${recipe.id}`} className="block">
@@ -134,12 +129,13 @@ function RecipeListView({ uid }: { uid: string }) {
 
 
 
-                {/* delete button */}
+                {/* delete button - Always visible on mobile, maybe subtle */}
                 <button
                   onClick={(e) => handleDelete(e, recipe.id)}
-                  className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                  className="absolute top-4 right-4 p-3 text-gray-300 hover:text-red-500 transition-colors" // Increased padding, removed opacity-0
+                  aria-label="Delete recipe"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-5 w-5" />
                 </button>
               </div>
             ))}

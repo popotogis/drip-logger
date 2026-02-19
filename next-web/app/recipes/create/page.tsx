@@ -26,9 +26,11 @@ export default function CreateRecipePage() {
     }
 
     return (
-        <div className="container mx-auto py-10">
-            <h1 className="text-3xl font-bold mb-8">Create New Recipe</h1>
-            <RecipeForm onSubmit={handleSubmit} />
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+            <div className="mx-auto max-w-4xl">
+                <h1 className="text-3xl font-bold mb-8 text-gray-800">Create New Recipe</h1>
+                <RecipeForm onSubmit={handleSubmit} />
+            </div>
         </div>
     )
 }

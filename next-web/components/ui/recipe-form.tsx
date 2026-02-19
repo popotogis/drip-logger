@@ -17,7 +17,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, ChevronDown } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 
 // Define schema inside or outside component
 const brewStepSchema = z.object({
@@ -134,203 +135,224 @@ export function RecipeForm({
                     </Card>
 
                     {/* params */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Parameters</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="beanWeightGrams"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <div className="flex items-center justify-between">
-                                                <FormLabel>Beans (g)</FormLabel>
-                                                <div className="flex items-center space-x-2">
-                                                    <Switch
-                                                        checked={isRatioLocked}
-                                                        onCheckedChange={setIsRatioLocked}
-                                                        id="ratio-lock"
-                                                    />
-                                                    <label htmlFor="ratio-lock" className="text-xs text-muted-foreground cursor-pointer">
-                                                        Lock Ratio
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <FormControl>
-                                                <Input
-                                                    type="number"
-                                                    step="0.1"
-                                                    {...field}
-                                                    onChange={(e) => {
-                                                        const newValue = parseFloat(e.target.value)
-                                                        const oldValue = Number(field.value) // Ensure it's a number
+                    <Collapsible defaultOpen className="group/params">
+                        <Card>
+                            <CardHeader>
+                                <CollapsibleTrigger asChild>
+                                    <div className="flex items-center justify-between cursor-pointer">
+                                        <CardTitle>Parameters</CardTitle>
+                                        <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/params:rotate-180" />
+                                    </div>
+                                </CollapsibleTrigger>
+                            </CardHeader>
+                            <CollapsibleContent>
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="beanWeightGrams"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <div className="flex items-center justify-between">
+                                                        <FormLabel>Beans (g)</FormLabel>
+                                                        <div className="flex items-center space-x-2">
+                                                            <Switch
+                                                                checked={isRatioLocked}
+                                                                onCheckedChange={setIsRatioLocked}
+                                                                id="ratio-lock"
+                                                            />
+                                                            <label htmlFor="ratio-lock" className="text-xs text-muted-foreground cursor-pointer">
+                                                                Lock Ratio
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            step="0.1" // Allows decimal
+                                                            inputMode="decimal" // Mobile numeric keypad
+                                                            {...field}
+                                                            onChange={(e) => {
+                                                                const newValue = parseFloat(e.target.value)
+                                                                const oldValue = Number(field.value) // Ensure it's a number
 
-                                                        // Update the field first
-                                                        field.onChange(e)
+                                                                // Update the field first
+                                                                field.onChange(e)
 
-                                                        if (isRatioLocked && oldValue > 0 && !isNaN(newValue) && newValue > 0) {
-                                                            const ratio = newValue / oldValue
-                                                            const currentSteps = form.getValues('steps') || []
-                                                            const newSteps = currentSteps.map(step => ({
-                                                                ...step,
-                                                                waterAmount: Math.round(Number(step.waterAmount) * ratio)
-                                                            }))
-                                                            // Use replace from useFieldArray for better performance and correctness
-                                                            // form.setValue('steps', newSteps) is not recommended for Field Arrays
-                                                            replace(newSteps)
-                                                        }
-                                                    }}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormItem>
-                                    <FormLabel>Total Water (g)</FormLabel>
-                                    <FormControl>
-                                        <Input value={`${totalWater} ${ratioDisplay}`} readOnly disabled className="bg-muted" />
+                                                                if (isRatioLocked && oldValue > 0 && !isNaN(newValue) && newValue > 0) {
+                                                                    const ratio = newValue / oldValue
+                                                                    const currentSteps = form.getValues('steps') || []
+                                                                    const newSteps = currentSteps.map(step => ({
+                                                                        ...step,
+                                                                        waterAmount: Math.round(Number(step.waterAmount) * ratio)
+                                                                    }))
+                                                                    // Use replace from useFieldArray for better performance and correctness
+                                                                    // form.setValue('steps', newSteps) is not recommended for Field Arrays
+                                                                    replace(newSteps)
+                                                                }
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormItem>
+                                            <FormLabel>Total Water (g)</FormLabel>
+                                            <FormControl>
+                                                <Input value={`${totalWater} ${ratioDisplay}`} readOnly disabled className="bg-muted" />
 
-                                    </FormControl>
-                                </FormItem>
-                            </div>
+                                            </FormControl>
+                                        </FormItem>
+                                    </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="temperature"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Temp (°C)</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="Optional" {...field} value={field.value || ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="grindSize"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Grind Size</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Medium-Fine, 20clicks..." {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="grinder"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Grinder</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Optional" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="dripper"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Dripper</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Optional" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                            <FormField
-                                control={form.control}
-                                name="filter"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Filter</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Optional" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* steps */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>Pouring Steps</CardTitle>
-                        <div className="text-sm font-medium text-muted-foreground">
-                            Total: {totalWater}g
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {fields.map((field, index) => (
-                            <div key={field.id} className="flex items-end gap-4">
-                                <div className="flex-1 grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="temperature"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Temp (°C)</FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" placeholder="Optional" {...field} value={field.value || ''} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="grindSize"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Grind Size</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Medium-Fine, 20clicks..." {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="grinder"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Grinder</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Optional" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="dripper"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Dripper</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Optional" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                     <FormField
                                         control={form.control}
-                                        name={`steps.${index}.waterAmount`}
+                                        name="filter"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel className={index !== 0 ? 'sr-only' : ''}>water (g)</FormLabel>
+                                                <FormLabel>Filter</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" step="1" {...field} />
+                                                    <Input placeholder="Optional" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
-                                        control={form.control}
-                                        name={`steps.${index}.waitTime`}
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className={index !== 0 ? 'sr-only' : ''}>wait (sec)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="number" step="1" {...field} />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
+                                </CardContent>
+                            </CollapsibleContent>
+                        </Card>
+                    </Collapsible>
+                </div>
+
+                {/* steps */}
+                <Collapsible defaultOpen className="group/steps">
+                    <Card>
+                        <CardHeader>
+                            <CollapsibleTrigger asChild>
+                                <div className="flex items-center justify-between cursor-pointer w-full">
+                                    <div className="flex items-center gap-4">
+                                        <CardTitle>Pouring Steps</CardTitle>
+                                        <div className="text-sm font-medium text-muted-foreground">
+                                            Total: {totalWater}g
+                                        </div>
+                                    </div>
+                                    <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/steps:rotate-180" />
                                 </div>
+                            </CollapsibleTrigger>
+                        </CardHeader>
+                        <CollapsibleContent>
+                            <CardContent className="space-y-4">
+                                {fields.map((field, index) => (
+                                    <div key={field.id} className="flex items-end gap-4">
+                                        <div className="flex-1 grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name={`steps.${index}.waterAmount`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className={index !== 0 ? 'sr-only' : ''}>water (g)</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" step="1" inputMode="decimal" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`steps.${index}.waitTime`}
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className={index !== 0 ? 'sr-only' : ''}>wait (sec)</FormLabel>
+                                                        <FormControl>
+                                                            <Input type="number" step="1" inputMode="decimal" {...field} />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="mb-0.5 h-10 w-10 md:h-8 md:w-8" // Larger touch target on mobile
+                                            onClick={() => remove(index)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
                                 <Button
                                     type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="mb-0.5"
-                                    onClick={() => remove(index)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2 w-full md:w-auto h-12 md:h-9" // Full width and taller on mobile
+                                    onClick={() => append({ waterAmount: 0, waitTime: 0 })}
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add Step
                                 </Button>
-                            </div>
-                        ))}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => append({ waterAmount: 0, waitTime: 0 })}
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Step
-                        </Button>
-                    </CardContent>
-                </Card>
+                            </CardContent>
+                        </CollapsibleContent>
+                    </Card>
+                </Collapsible>
 
                 <div className="flex justify-end gap-2">
                     {onSaveAsCopy && (
