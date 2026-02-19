@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense, use } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { copyToClipboard } from '@/lib/utils'
 import { auth } from '@/lib/firebase'
 import { useAuthState } from 'react-firebase-hooks/auth'
 import { getBrewResult, updateBrewResult, generateMarkdown } from '@/lib/brewResultUtils'
@@ -68,8 +69,12 @@ function BrewResultContent() {
         const updated = await handleSave()
         if (updated) {
             const md = generateMarkdown(updated)
-            navigator.clipboard.writeText(md)
-            alert('Copied Markdown to clipboard')
+            const success = await copyToClipboard(md)
+            if (success) {
+                alert('Copied Markdown to clipboard')
+            } else {
+                alert('Failed to copy. Please copy manually.')
+            }
         }
     }
 
