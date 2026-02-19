@@ -126,7 +126,11 @@ export const TimerDisplay = ({ recipe }: { recipe: Recipe }) => {
                 {/* ... Reset Button ... */}
                 <Button
                     size="lg"
-                    className={`w-24 h-24 rounded-full ${isLastStep ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                    className={`w-24 h-24 rounded-full transition-colors duration-300
+                        ${!isActive ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}
+                        ${isActive && !isLastStep ? 'bg-orange-500 hover:bg-orange-600 text-white' : ''}
+                        ${isActive && isLastStep ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
+                    `}
                     onClick={!isActive ? start : (isLastStep ? handleFinish : nextStep)}
                     disabled={isSaving}
                 >

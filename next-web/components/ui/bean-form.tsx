@@ -50,7 +50,7 @@ export function BeanForm({ defaultValues, onSubmit }: BeanFormProps) {
                     name="name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Bean Name</FormLabel>
+                            <FormLabel>Bean Name <span className="text-red-500">*</span></FormLabel>
                             <FormControl><Input placeholder="Ethiopia Yirgacheffe" {...field} /></FormControl>
                             <FormMessage />
                         </FormItem>
@@ -63,7 +63,7 @@ export function BeanForm({ defaultValues, onSubmit }: BeanFormProps) {
                         name="roaster"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Roaster</FormLabel>
+                                <FormLabel>Roaster <span className="text-red-500">*</span></FormLabel>
                                 <FormControl><Input placeholder="The Barn" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>

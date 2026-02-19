@@ -6,7 +6,7 @@ import { copyToClipboard } from '@/lib/utils'
 import { auth } from '@/lib/firebase'
 import { useAuthState } from 'react-firebase-hooks/auth'
 import { getBrewResult, updateBrewResult, generateMarkdown } from '@/lib/brewResultUtils'
-import { createRecipe } from '@/lib/recipeUtils'
+import { createRecipe, getRecipe } from '@/lib/recipeUtils'
 import { BrewResult } from '@/types/brewResult'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -33,15 +33,36 @@ function BrewResultContent() {
     const [notes, setNotes] = useState('')
     const [selectedBeanId, setSelectedBeanId] = useState<string>('')
     const [isSaving, setIsSaving] = useState(false)
+    const [isRecipeModified, setIsRecipeModified] = useState(false)
+    const [isRecipeSaved, setIsRecipeSaved] = useState(false) // Track if user saved the recipe manually in this session
     const router = useRouter()
 
     useEffect(() => {
         if (user && id) {
-            getBrewResult(user.uid, id).then(res => {
+            getBrewResult(user.uid, id).then(async res => {
                 if (res) {
                     setResult(res)
                     setNotes(res.notes)
                     if (res.bean) setSelectedBeanId(res.bean.id)
+
+                    // Check if recipe is modified compared to storage
+                    if (res.recipe.id && res.recipe.id !== 'temp') {
+                        const original = await getRecipe(user.uid, res.recipe.id)
+                        if (original) {
+                            // Compare relevant fields
+                            const currentJson = JSON.stringify({ ...res.recipe, id: '', lastUsed: '' })
+                            const originalJson = JSON.stringify({ ...original, id: '', lastUsed: '' })
+                            if (currentJson !== originalJson) {
+                                setIsRecipeModified(true)
+                            }
+                        } else {
+                            // Original not found (orphaned)
+                            setIsRecipeModified(true)
+                        }
+                    } else {
+                        // Temp recipe
+                        setIsRecipeModified(true)
+                    }
                 }
             })
             getBeans(user.uid).then(setBeans)
@@ -66,6 +87,10 @@ function BrewResultContent() {
     }
 
     const handleCopyMarkdown = async () => {
+        if (!selectedBeanId) {
+            alert('Please select a bean first.')
+            return
+        }
         const updated = await handleSave()
         if (updated) {
             const md = generateMarkdown(updated)
@@ -79,6 +104,10 @@ function BrewResultContent() {
     }
 
     const handleDownloadMarkdown = async () => {
+        if (!selectedBeanId) {
+            alert('Please select a bean first.')
+            return
+        }
         const updated = await handleSave()
         if (updated) {
             const md = generateMarkdown(updated)
@@ -110,6 +139,7 @@ function BrewResultContent() {
                 ...recipeData,
                 name: `${result.recipe.name} (from Brew)`
             })
+            setIsRecipeSaved(true)
             alert('Recipe saved successfully!')
         } catch (e) {
             console.error(e)
@@ -117,11 +147,21 @@ function BrewResultContent() {
         }
     }
 
+    const isDirty = isRecipeModified && !isRecipeSaved
+
+    const handleHomeClick = (e: React.MouseEvent) => {
+        if (isDirty) {
+            if (!confirm('This brew uses a modified recipe. Do you want to leave without saving the recipe?')) {
+                e.preventDefault()
+            }
+        }
+    }
+
     if (loading || !result) return <div className="p-8">Loading...</div>
     return (
         <div className="container mx-auto py-10 px-4 max-w-3xl">
             <div className="mb-6 flex justify-between items-center">
-                <Link href="/">
+                <Link href="/" onClick={handleHomeClick}>
                     <Button variant="ghost" className="pl-0">
                         <Home className="mr-2 h-4 w-4" />
                         Home
@@ -143,7 +183,7 @@ function BrewResultContent() {
                 </div>
                 {/* Bean Selection */}
                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Select Bean</label>
+                    <label className="text-sm font-medium">Select Bean <span className="text-red-500">*</span></label>
                     <Select value={selectedBeanId} onValueChange={setSelectedBeanId}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select a bean..." />
@@ -200,16 +240,18 @@ function BrewResultContent() {
                             </tbody>
                         </table>
                     </div>
-                    <Button onClick={handleSaveRecipe} variant="secondary" className="w-full">
-                        Save Recipe
-                    </Button>
                 </div>
                 {/* Actions */}
-                <div className="flex flex-col gap-3 pt-4">
-                    <Button onClick={handleCopyMarkdown} className="w-full">
+                <div className="flex flex-col gap-3 pt-4 border-t">
+                    <Button onClick={handleSaveRecipe} className="w-full bg-orange-600 hover:bg-orange-700 text-white">
+                        Save Recipe
+                    </Button>
+
+                    <Button onClick={handleCopyMarkdown} className="w-full" variant="secondary">
                         <Copy className="mr-2 h-4 w-4" />
                         Copy as Markdown
                     </Button>
+
                     <Button onClick={handleDownloadMarkdown} variant="outline" className="w-full">
                         <Download className="mr-2 h-4 w-4" />
                         Download Markdown File

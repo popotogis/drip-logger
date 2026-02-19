@@ -110,7 +110,7 @@ export function RecipeForm({
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Recipe Name</FormLabel>
+                                        <FormLabel>Recipe Name <span className="text-red-500">*</span></FormLabel>
                                         <FormControl>
                                             <Input placeholder="4:6 Method" {...field} />
                                         </FormControl>
@@ -154,7 +154,7 @@ export function RecipeForm({
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <div className="flex items-center justify-between">
-                                                        <FormLabel>Beans (g)</FormLabel>
+                                                        <FormLabel>Beans (g) <span className="text-red-500">*</span></FormLabel>
                                                         <div className="flex items-center space-x-2">
                                                             <Switch
                                                                 checked={isRatioLocked}
@@ -225,7 +225,7 @@ export function RecipeForm({
                                             name="grindSize"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Grind Size</FormLabel>
+                                                    <FormLabel>Grind Size <span className="text-red-500">*</span></FormLabel>
                                                     <FormControl>
                                                         <Input placeholder="Medium-Fine, 20clicks..." {...field} />
                                                     </FormControl>
@@ -307,7 +307,7 @@ export function RecipeForm({
                                                 name={`steps.${index}.waterAmount`}
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className={index !== 0 ? 'sr-only' : ''}>water (g)</FormLabel>
+                                                        <FormLabel className={index !== 0 ? 'sr-only' : ''}>water (g) <span className="text-red-500">*</span></FormLabel>
                                                         <FormControl>
                                                             <Input type="number" step="1" inputMode="decimal" {...field} />
                                                         </FormControl>
@@ -320,7 +320,7 @@ export function RecipeForm({
                                                 name={`steps.${index}.waitTime`}
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className={index !== 0 ? 'sr-only' : ''}>wait (sec)</FormLabel>
+                                                        <FormLabel className={index !== 0 ? 'sr-only' : ''}>wait (sec) <span className="text-red-500">*</span></FormLabel>
                                                         <FormControl>
                                                             <Input type="number" step="1" inputMode="decimal" {...field} />
                                                         </FormControl>

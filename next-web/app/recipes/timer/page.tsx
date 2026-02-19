@@ -90,7 +90,7 @@ function TimerPageContent() {
                 {recipe.beanWeightGrams}g beans / {recipe.totalWaterAmount}ml water
             </p>
 
-            <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
+            <div className="flex-1 flex flex-col justify-center max-w-xl mx-auto w-full">
                 <TimerDisplay recipe={recipe} />
             </div>
         </div>
