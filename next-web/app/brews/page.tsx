@@ -138,15 +138,22 @@ function BrewResultContent() {
         if (!user || !result) return
         try {
             const { id: _, ...recipeData } = result.recipe
-            await createRecipe(user.uid, {
+
+            // Optimistic Update: Do not await the network request
+            createRecipe(user.uid, {
                 ...recipeData,
                 name: `${result.recipe.name} (from Brew)`
+            }).catch(e => {
+                console.error("Failed to save recipe in background:", e)
+                // Optionally could show a toast indicating background failure here later
             })
+
+            // Immediately update UI to feel instant to the user
             setIsRecipeSaved(true)
             alert('Recipe saved successfully!')
         } catch (e) {
             console.error(e)
-            alert('Failed to save recipe')
+            alert('An error occurred prior to saving the recipe')
         }
     }
 
