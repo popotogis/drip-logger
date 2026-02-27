@@ -58,15 +58,25 @@ export function BrewSummary({ uid, initialResult, onSaveBrewResult }: BrewSummar
             alert('Please select a bean first.')
             return
         }
-        const updated = await handleSave()
-        if (updated) {
-            const md = generateMarkdown(updated)
-            const success = await copyToClipboard(md)
-            if (success) {
-                alert('Copied Markdown to clipboard')
-            } else {
-                alert('Failed to copy. Please copy manually.')
-            }
+
+        const selectedBean = fetchedBeans.find(b => b.id === selectedBeanId)
+        const updatedResult: BrewResult = {
+            ...result,
+            bean: selectedBean,
+            notes: notes
+        }
+
+        // Generate markdown synchronously from current state
+        const md = generateMarkdown(updatedResult)
+
+        // Trigger save in background (don't await it so we don't break mobile clipboard API)
+        handleSave().catch(e => console.error("Background save failed:", e))
+
+        const success = await copyToClipboard(md)
+        if (success) {
+            alert('Copied Markdown to clipboard')
+        } else {
+            alert('Failed to copy. Please copy manually.')
         }
     }
 
@@ -75,27 +85,36 @@ export function BrewSummary({ uid, initialResult, onSaveBrewResult }: BrewSummar
             alert('Please select a bean first.')
             return
         }
-        const updated = await handleSave()
-        if (updated) {
-            const md = generateMarkdown(updated)
-            const date = updated.brewedAt.toDate()
 
-            const yyyy = date.getFullYear()
-            const mm = (date.getMonth() + 1).toString().padStart(2, '0')
-            const dd = date.getDate().toString().padStart(2, '0')
-            const hh = date.getHours().toString().padStart(2, '0')
-            const min = date.getMinutes().toString().padStart(2, '0')
-            const beanName = updated.bean?.name.replace(/[<>:"/\\|?*]/g, '_') || 'NoBean'
-
-            const filename = `${yyyy}${mm}${dd}_${hh}${min}_${beanName}.md`
-            const blob = new Blob([md], { type: 'text/markdown' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = filename
-            a.click()
-            URL.revokeObjectURL(url)
+        const selectedBean = fetchedBeans.find(b => b.id === selectedBeanId)
+        const updatedResult: BrewResult = {
+            ...result,
+            bean: selectedBean,
+            notes: notes
         }
+
+        const md = generateMarkdown(updatedResult)
+        const date = updatedResult.brewedAt.toDate()
+
+        const yyyy = date.getFullYear()
+        const mm = (date.getMonth() + 1).toString().padStart(2, '0')
+        const dd = date.getDate().toString().padStart(2, '0')
+        const hh = date.getHours().toString().padStart(2, '0')
+        const min = date.getMinutes().toString().padStart(2, '0')
+        const beanName = updatedResult.bean?.name.replace(/[<>:"/\\|?*]/g, '_') || 'NoBean'
+
+        const filename = `${yyyy}${mm}${dd}_${hh}${min}_${beanName}.md`
+        const blob = new Blob([md], { type: 'text/markdown' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+
+        // Trigger background save
+        handleSave().catch(e => console.error("Background save failed:", e))
+
+        a.click()
+        URL.revokeObjectURL(url)
     }
 
     const handleSaveRecipe = async () => {
