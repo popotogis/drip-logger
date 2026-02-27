@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { copyToClipboard } from '@/lib/utils'
 import { BrewResult } from '@/types/brewResult'
 import { generateMarkdown } from '@/lib/brewResultUtils'
@@ -10,8 +10,9 @@ import { Copy, Download, Plus } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { BeanForm } from '@/components/ui/bean-form'
-import { useBeans } from '@/hooks/useBeans'
-import { useRecipe } from '@/hooks/useRecipe'
+import { getBeans, createBean } from '@/lib/beanUtils'
+import { createRecipe } from '@/lib/recipeUtils'
+import { Bean } from '@/types/bean'
 
 interface BrewSummaryProps {
     uid: string
@@ -20,8 +21,13 @@ interface BrewSummaryProps {
 }
 
 export function BrewSummary({ uid, initialResult, onSaveBrewResult }: BrewSummaryProps) {
-    const { beans: fetchedBeans, addBean } = useBeans(uid)
-    const { saveRecipe } = useRecipe(uid)
+    const [fetchedBeans, setFetchedBeans] = useState<Bean[]>([])
+
+    useEffect(() => {
+        if (uid) {
+            getBeans(uid).then(setFetchedBeans)
+        }
+    }, [uid])
 
     const [result, setResult] = useState<BrewResult>(initialResult)
     const [notes, setNotes] = useState(initialResult.notes)
@@ -96,10 +102,15 @@ export function BrewSummary({ uid, initialResult, onSaveBrewResult }: BrewSummar
         if (!result) return
         try {
             const { id: _, ...recipeData } = result.recipe
-            await saveRecipe({
+
+            // Optimistic Update: Do not await the network request
+            createRecipe(uid, {
                 ...recipeData,
                 name: `${result.recipe.name} (from Brew)`
+            }).catch(e => {
+                console.error("Failed to save recipe in background:", e)
             })
+
             setIsRecipeSaved(true)
             alert('Recipe saved successfully!')
         } catch (e) {
@@ -110,7 +121,9 @@ export function BrewSummary({ uid, initialResult, onSaveBrewResult }: BrewSummar
 
     const handleCreateBean = async (data: any) => {
         try {
-            const newBeanId = await addBean(data)
+            const newBeanId = await createBean(uid, data)
+            const newBeans = await getBeans(uid)
+            setFetchedBeans(newBeans)
             setSelectedBeanId(newBeanId)
             setIsBeanDialogOpen(false)
             alert('Bean created successfully!')
