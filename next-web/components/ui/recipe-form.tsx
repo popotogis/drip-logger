@@ -2,7 +2,7 @@
 
 import { useFieldArray, useForm, DefaultValues } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -84,6 +84,9 @@ export function RecipeForm({
     })
 
     const [isRatioLocked, setIsRatioLocked] = useState(true)
+    const isEditingBeans = useRef(false)
+    const lastValidRatio = useRef<number | null>(null)
+    const lastValidProportions = useRef<number[] | null>(null)
 
     const steps = form.watch('steps')
     const beanWeight = form.watch('beanWeightGrams')
@@ -94,6 +97,15 @@ export function RecipeForm({
     const ratio = (beanWeight && beanWeight > 0) ? (totalWater / beanWeight) : 0
     const ratioDisplay = ratio > 0 ? `(1:${Number.isInteger(ratio) ? ratio : ratio.toFixed(1)})` : ''
 
+    useEffect(() => {
+        if (!isEditingBeans.current) {
+            const bw = Number(beanWeight) || 0
+            if (totalWater > 0 && bw > 0) {
+                lastValidRatio.current = totalWater / bw
+                lastValidProportions.current = steps.map(s => (Number(s.waterAmount) || 0) / totalWater)
+            }
+        }
+    }, [steps, beanWeight, totalWater])
 
     return (
         <Form {...form}>
@@ -172,22 +184,43 @@ export function RecipeForm({
                                                             step="0.1" // Allows decimal
                                                             inputMode="decimal" // Mobile numeric keypad
                                                             {...field}
+                                                            onFocus={() => {
+                                                                isEditingBeans.current = true
+                                                            }}
+                                                            onBlur={(e) => {
+                                                                field.onBlur() // keep react-hook-form's blur
+                                                                isEditingBeans.current = false
+                                                            }}
                                                             onChange={(e) => {
                                                                 const newValue = parseFloat(e.target.value)
-                                                                const oldValue = Number(field.value) // Ensure it's a number
+
+                                                                // Safety fallback in case focus didn't fire
+                                                                isEditingBeans.current = true
 
                                                                 // Update the field first
                                                                 field.onChange(e)
 
-                                                                if (isRatioLocked && oldValue > 0 && !isNaN(newValue) && newValue > 0) {
-                                                                    const ratio = newValue / oldValue
+                                                                if (isRatioLocked && !isNaN(newValue) && newValue > 0 && lastValidRatio.current !== null && lastValidProportions.current !== null) {
+                                                                    const targetTotalWater = newValue * lastValidRatio.current
                                                                     const currentSteps = form.getValues('steps') || []
-                                                                    const newSteps = currentSteps.map(step => ({
-                                                                        ...step,
-                                                                        waterAmount: Math.round(Number(step.waterAmount) * ratio)
-                                                                    }))
-                                                                    // Use replace from useFieldArray for better performance and correctness
-                                                                    // form.setValue('steps', newSteps) is not recommended for Field Arrays
+                                                                    
+                                                                    let currentSum = 0;
+                                                                    const newSteps = currentSteps.map((step, index) => {
+                                                                        if (index === currentSteps.length - 1) {
+                                                                            // Last step: adjust for rounding errors
+                                                                            return {
+                                                                                ...step,
+                                                                                waterAmount: Math.round(targetTotalWater) - currentSum
+                                                                            }
+                                                                        }
+                                                                        const stepWater = Math.round(targetTotalWater * lastValidProportions.current![index])
+                                                                        currentSum += stepWater
+                                                                        return {
+                                                                            ...step,
+                                                                            waterAmount: stepWater
+                                                                        }
+                                                                    })
+                                                                    
                                                                     replace(newSteps)
                                                                 }
                                                             }}
