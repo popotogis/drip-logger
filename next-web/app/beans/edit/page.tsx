@@ -38,18 +38,20 @@ function EditBeanContent() {
     if (loading || !bean) return <div className="p-8">Loading...</div>
 
     return (
-        <div className="container mx-auto py-10 px-4 max-w-2xl">
-            <Link href="/beans" className="mb-6 inline-block">
-                <Button variant="ghost" className="pl-0">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back
-                </Button>
-            </Link>
+        <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+            <div className="mx-auto max-w-4xl">
+                <Link href="/beans" className="mb-6 inline-block">
+                    <Button variant="ghost" className="pl-0">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                    </Button>
+                </Link>
 
-            <h1 className="text-3xl font-bold mb-8">Edit Bean</h1>
+                <h1 className="text-3xl font-bold mb-8 text-gray-800">Edit Bean</h1>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-                <BeanForm defaultValues={bean} onSubmit={handleSubmit} />
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <BeanForm defaultValues={bean} onSubmit={handleSubmit} />
+                </div>
             </div>
         </div>
     )

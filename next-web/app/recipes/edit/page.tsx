@@ -7,6 +7,9 @@ import { useAuthState } from 'react-firebase-hooks/auth'
 import { getRecipe, updateRecipe, createRecipe } from '@/lib/recipeUtils'
 import { RecipeForm } from '@/components/ui/recipe-form'
 import { Recipe } from '@/types/recipe'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 function EditRecipeContent() {
     const router = useRouter()
@@ -75,6 +78,12 @@ function EditRecipeContent() {
     return (
         <div className="min-h-screen bg-gray-50 p-4 md:p-8">
             <div className="mx-auto max-w-4xl">
+                <Link href="/" className="mb-6 inline-block">
+                    <Button variant="ghost" className="pl-0">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                    </Button>
+                </Link>
                 <h1 className="text-3xl font-bold mb-8 text-gray-800">Edit Recipe</h1>
                 <RecipeForm
                     defaultValues={recipe}
